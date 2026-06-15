@@ -1,159 +1,144 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Initialize UI Window
-local Window = Fluent:CreateWindow({
-    Title = "🐟 Fisch Hub | Premium Delta",
-    SubTitle = "No Key Needed",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 420),
-    Acrylic = false, 
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.RightControl
+local Window = Rayfield:CreateWindow({
+   Name = "🐟 Fisch Hub V2 | Rayfield Edition",
+   LoadingTitle = "Loading Delta Optimizer...",
+   LoadingSubtitle = "by AI Assistant",
+   ConfigurationSaving = {
+      Enabled = false
+   },
+   Discord = {
+      Enabled = false
+   },
+   KeySystem = false -- No Key Needed
 })
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "Main Fishing", Icon = "fish" }),
-    Teleport = Window:AddTab({ Title = "Island TP", Icon = "map-pin" }),
-    Players = Window:AddTab({ Title = "Player TP", Icon = "users" }),
-    Misc = Window:AddTab({ Title = "Character", Icon = "sliders" }),
-    Settings = Window:AddTab({ Title = "Language", Icon = "settings" })
-}
-
+-- VARIABLES
 local LocalPlayer = game.Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local Language = "EN"
 
 LocalPlayer.CharacterAdded:Connect(function(char)
     Character = char
 end)
 
-local LangText = {
-    VN = {
-        fix_msg = "Đã reset trạng thái câu cá để sửa lỗi kẹt!",
-        notify_tp = "Đã dịch chuyển đến: "
-    },
-    EN = {
-        fix_msg = "Fishing status reset to fix glitch!",
-        notify_tp = "Teleported to: "
-    }
-}
-
-------------------------------------------------------------------------
--- TAB: LANGUAGE SETTINGS
-------------------------------------------------------------------------
-Tabs.Settings:AddDropdown("LangDropdown", {
-    Title = "Select Menu Language",
-    Values = {"English", "Tiếng Việt"},
-    CurrentValue = "English",
-    Callback = function(Value)
-        if Value == "Tiếng Việt" then
-            Language = "VN"
-        else
-            Language = "EN"
-        end
-        Fluent:Notify({
-            Title = "Language Status",
-            Content = Language == "EN" and "Language set to English!" or "Đã chuyển sang Tiếng Việt!",
-            Duration = 2
-        })
-    end
-})
-
-------------------------------------------------------------------------
--- TAB 1: AUTO FISHING & FIX SYSTEM
-------------------------------------------------------------------------
 local AutoEquip = false
 local AutoCast = false
 local AutoReel = false
 
--- 1. Auto Equip Rod
-Tabs.Main:AddToggle("AutoEquip", {
-    Title = "Auto Equip Fishing Rod",
-    Default = false,
-    Callback = function(Value)
-        AutoEquip = Value
-        task.spawn(function()
-            while AutoEquip do
-                if not AutoEquip then break end
-                if not Character:FindFirstChildOfClass("Tool") then
-                    local Backpack = LocalPlayer:FindFirstChild("Backpack")
-                    if Backpack then
-                        for _, tool in pairs(Backpack:GetChildren()) do
-                            if tool:IsA("Tool") and (tool.Name:lower():find("rod") or tool:FindFirstChild("Click")) then
-                                Character.Humanoid:EquipTool(tool)
-                                break
-                            end
-                        end
-                    end
-                end
-                task.wait(1)
+------------------------------------------------------------------------
+-- TAB 1: MAIN FISHING (AUTOMATION & FIXES)
+------------------------------------------------------------------------
+local MainTab = Window:CreateTab("Main Fishing", "fish")
+
+MainTab:CreateToggle({
+   Name = "Auto Equip Rod",
+   CurrentValue = false,
+   Flag = "ToggleEquip",
+   Callback = function(Value)
+      AutoEquip = Value
+      task.spawn(function()
+         while AutoEquip do
+            if not AutoEquip then break end
+            if not Character:FindFirstChildOfClass("Tool") then
+               local Backpack = LocalPlayer:FindFirstChild("Backpack")
+               if Backpack then
+                  for _, tool in pairs(Backpack:GetChildren()) do
+                     if tool:IsA("Tool") and (tool.Name:lower():find("rod") or tool:FindFirstChild("Click")) then
+                        Character.Humanoid:EquipTool(tool)
+                        break
+                     end
+                  end
+               end
             end
-        end)
-    end
+            task.wait(1)
+         end
+      end)
+   end
 })
 
--- 2. Fix Auto Fishing Glitch Button
-Tabs.Main:AddButton({
-    Title = "Fix Auto Fishing Glitch",
-    Callback = function()
-        local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-        if PlayerGui:FindFirstChild("Reel") then PlayerGui.Reel:Destroy() end
-        if PlayerGui:FindFirstChild("Cast") then PlayerGui.Cast:Destroy() end
-        AutoCast = false
-        AutoReel = false
-        Fluent:Notify({Title = "System Fix", Content = LangText[Language].fix_msg, Duration = 2})
-    end
+MainTab:CreateToggle({
+   Name = "Auto Perfect Cast (100% Luck)",
+   CurrentValue = false,
+   Flag = "ToggleCast",
+   Callback = function(Value)
+      AutoCast = Value
+      task.spawn(function()
+         while AutoCast do
+            if not AutoCast then break end
+            local Tool = Character:FindFirstChildOfClass("Tool")
+            if Tool and Tool:FindFirstChild("Click") then
+               -- Active tool casting
+               Tool.Click:Activate()
+               
+               -- Perfect Cast Modifier (Bypasses the strength meter to get 100% Perfect)
+               local Events = game:GetService("ReplicatedStorage"):FindFirstChild("events")
+               if Events and Events:FindFirstChild("cast") then
+                  Events.cast:FireServer(100, true) -- Sets power to maximum perfect level
+               end
+            end
+            task.wait(2.5) -- Safe smart loop delay to prevent execution crashes
+         end
+      end)
+   end
 })
 
--- 3. Auto Cast Rod
-Tabs.Main:AddToggle("AutoCast", {
-    Title = "Auto Cast Rod",
-    Default = false,
-    Callback = function(Value)
-        AutoCast = Value
-        task.spawn(function()
-            while AutoCast do
-                if not AutoCast then break end
-                local Tool = Character:FindFirstChildOfClass("Tool")
-                if Tool and Tool:FindFirstChild("Click") then
-                    Tool.Click:Activate()
-                end
-                task.wait(1.5)
-            end
-        end)
-    end
+MainTab:CreateToggle({
+   Name = "Instant Reel (Fast Farm)",
+   CurrentValue = false,
+   Flag = "ToggleReel",
+   Callback = function(Value)
+      AutoReel = Value
+      task.spawn(function()
+         while AutoReel do
+            if not AutoReel then break end
+            pcall(function()
+               local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+               -- Checks if the mini-game bar GUI pops up on screen
+               if PlayerGui:FindFirstChild("Reel") then
+                  local Reel = PlayerGui.Reel
+                  if Reel:FindFirstChild("Bar") then
+                     local Events = game:GetService("ReplicatedStorage"):FindFirstChild("events")
+                     if Events and Events:FindFirstChild("reelfinish") then
+                        -- Instantly triggers successful catch event with 100% accuracy
+                        Events.reelfinish:FireServer(100, true)
+                     end
+                  end
+               end
+            end)
+            task.wait(0.1) -- Ultra-fast checking interval when bar appears
+         end
+      end)
+   end
 })
 
--- 4. Instant Reel
-Tabs.Main:AddToggle("AutoReel", {
-    Title = "Instant Reel (Fast Catch)",
-    Default = false,
-    Callback = function(Value)
-        AutoReel = Value
-        task.spawn(function()
-            while AutoReel do
-                if not AutoReel then break end
-                pcall(function()
-                    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-                    if PlayerGui:FindFirstChild("Reel") then
-                        local Reel = PlayerGui.Reel
-                        if Reel:FindFirstChild("Bar") then
-                            local Events = game:GetService("ReplicatedStorage"):FindFirstChild("events")
-                            if Events and Events:FindFirstChild("reelfinish") then
-                                Events.reelfinish:FireServer(100, true)
-                            end
-                        end
-                    end
-                end)
-                task.wait(0.2)
+-- Smart Auto-Fix Background Anti-Stuck Loop
+task.spawn(function()
+   while true do
+      task.wait(5) -- Checks every 5 seconds
+      if AutoCast or AutoReel then
+         pcall(function()
+            local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+            -- If fishing GUI breaks or character gets frozen in casting state
+            if PlayerGui:FindFirstChild("Reel") and not Character:FindFirstChildOfClass("Tool") then
+               PlayerGui.Reel:Destroy()
+               if PlayerGui:FindFirstChild("Cast") then PlayerGui.Cast:Destroy() end
+               Rayfield:Notify({
+                  Name = "Anti-Stuck System",
+                  Content = "Glitch detected! Automatically reset fishing status.",
+                  Duration = 2,
+                  Image = "alert-triangle"
+               })
             end
-        end)
-    end
-})
+         end)
+      end
+   end
+end)
 
 ------------------------------------------------------------------------
--- TAB 2: ISLAND TELEPORT SYSTEM
+-- TAB 2: ISLAND TELEPORT
 ------------------------------------------------------------------------
+local TeleportTab = Window:CreateTab("Island TP", "map-pin")
+
 local Islands = {
     ["Moosewood (Starter)"] = Vector3.new(370, 134, 250),
     ["Snowcap Island"] = Vector3.new(2622, 135, 2380),
@@ -164,124 +149,132 @@ local Islands = {
 
 local IslandNames = {}
 for name, _ in pairs(Islands) do table.insert(IslandNames, name) end
-
 local SelectedIsland = "Moosewood (Starter)"
 
-Tabs.Teleport:AddDropdown("IslandDropdown", {
-    Title = "Select Destination Island",
-    Values = IslandNames,
-    CurrentValue = SelectedIsland,
-    Callback = function(Value)
-        SelectedIsland = Value
-    end
+TeleportTab:CreateDropdown({
+   Name = "Select Destination Island",
+   Options = IslandNames,
+   CurrentOption = {SelectedIsland},
+   MultipleOptions = false,
+   Callback = function(Options)
+      SelectedIsland = Options[1]
+   end,
 })
 
-Tabs.Teleport:AddButton({
-    Title = "Click to Teleport to Island",
-    Callback = function()
-        local TargetPos = Islands[SelectedIsland]
-        if TargetPos and Character:FindFirstChild("HumanoidRootPart") then
-            Character.HumanoidRootPart.CFrame = CFrame.new(TargetPos)
-            Fluent:Notify({Title = "Teleportation", Content = LangText[Language].notify_tp .. SelectedIsland, Duration = 3})
-        end
-    end
+TeleportTab:CreateButton({
+   Name = "Click to Teleport to Island",
+   Callback = function()
+      local TargetPos = Islands[SelectedIsland]
+      if TargetPos and Character:FindFirstChild("HumanoidRootPart") then
+         Character.HumanoidRootPart.CFrame = CFrame.new(TargetPos)
+         Rayfield:Notify({
+            Name = "Teleportation",
+            Content = "Arrived safely at " .. SelectedIsland,
+            Duration = 3,
+            Image = "map-pin"
+         })
+      end
+   end,
 })
 
 ------------------------------------------------------------------------
--- TAB 3: PLAYER TELEPORT SYSTEM (SCANNER)
+-- TAB 3: PLAYER TELEPORT
 ------------------------------------------------------------------------
+local PlayerTab = Window:CreateTab("Player TP", "users")
 local SelectedPlayerName = ""
 
 local function GetPlayerNames()
     local names = {}
     for _, p in pairs(game.Players:GetPlayers()) do
-        if p ~= LocalPlayer then
-            table.insert(names, p.Name)
-        end
+        if p ~= LocalPlayer then table.insert(names, p.Name) end
     end
     return names
 end
 
-local PlayerDropdown = Tabs.Players:AddDropdown("PlayerDropdown", {
-    Title = "Select Target User Name",
-    Values = GetPlayerNames(),
-    CurrentValue = "",
-    Callback = function(Value)
-        SelectedPlayerName = Value
-    end
+local PlayerDropdown = PlayerTab:CreateDropdown({
+   Name = "Select Target User Name",
+   Options = GetPlayerNames(),
+   CurrentOption = {""},
+   MultipleOptions = false,
+   Callback = function(Options)
+      SelectedPlayerName = Options[1]
+   end,
 })
 
-game.Players.PlayerAdded:Connect(function() PlayerDropdown:SetValues(GetPlayerNames()) end)
-game.Players.PlayerRemoving:Connect(function() PlayerDropdown:SetValues(GetPlayerNames()) end)
+game.Players.PlayerAdded:Connect(function() PlayerDropdown:Refresh(GetPlayerNames()) end)
+game.Players.PlayerRemoving:Connect(function() PlayerDropdown:Refresh(GetPlayerNames()) end)
 
-Tabs.Players:AddButton({
-    Title = "Teleport to Selected Player",
-    Callback = function()
-        if SelectedPlayerName ~= "" then
-            local TargetPlayer = game.Players:FindFirstChild(SelectedPlayerName)
-            if TargetPlayer and TargetPlayer.Character and TargetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                if Character:FindFirstChild("HumanoidRootPart") then
-                    Character.HumanoidRootPart.CFrame = TargetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, 0)
-                    Fluent:Notify({Title = "Player Teleport", Content = LangText[Language].notify_tp .. SelectedPlayerName, Duration = 3})
-                end
+PlayerTab:CreateButton({
+   Name = "Teleport to Selected Player",
+   Callback = function()
+      if SelectedPlayerName ~= "" then
+         local TargetPlayer = game.Players:FindFirstChild(SelectedPlayerName)
+         if TargetPlayer and TargetPlayer.Character and TargetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            if Character:FindFirstChild("HumanoidRootPart") then
+               Character.HumanoidRootPart.CFrame = TargetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, 0)
             end
-        end
-    end
+         end
+      end
+   end,
 })
 
 ------------------------------------------------------------------------
--- TAB 4: NOCLIP, FULLBRIGHT, SPEED, JUMP
+-- TAB 4: CHARACTER MODS
 ------------------------------------------------------------------------
+local MiscTab = Window:CreateTab("Character", "sliders")
 local Noclip = false
 local Fullbright = false
 local WalkSpeedValue = 16
 local JumpPowerValue = 50
 
--- 1. Noclip (Walk Through Walls)
-Tabs.Misc:AddToggle("NoclipToggle", {
-    Title = "Noclip (Walk Through Walls)",
-    Default = false,
-    Callback = function(Value)
-        Noclip = Value
-    end
+MiscTab:CreateToggle({
+   Name = "Noclip (Walk Through Walls)",
+   CurrentValue = false,
+   Flag = "ToggleNoclip",
+   Callback = function(Value) Noclip = Value end
 })
 
 game:GetService("RunService").Stepped:Connect(function()
     if Noclip and Character then
         for _, part in pairs(Character:GetChildren()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
 end)
 
--- 2. Fullbright (Night Vision)
-Tabs.Misc:AddToggle("BrightToggle", {
-    Title = "Fullbright (Clear Night Vision)",
-    Default = false,
-    Callback = function(Value)
-        Fullbright = Value
-        if Fullbright then
-            game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
-            game:GetService("Lighting").Brightness = 2
-        else
-            game:GetService("Lighting").Ambient = Color3.fromRGB(130, 130, 130)
-        end
-    end
+MiscTab:CreateToggle({
+   Name = "Fullbright (Clear Night Vision)",
+   CurrentValue = false,
+   Flag = "ToggleBright",
+   Callback = function(Value)
+      Fullbright = Value
+      if Fullbright then
+         game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
+         game:GetService("Lighting").Brightness = 2
+      else
+         game:GetService("Lighting").Ambient = Color3.fromRGB(130, 130, 130)
+      end
+   end
 })
 
--- 3. Speed & Jump Power Sliders
-Tabs.Misc:AddSlider("SpeedSlider", {
-    Title = "Walk Speed Customizer",
-    Min = 16, Max = 150, Default = 16, Rounding = 0,
-    Callback = function(Value) WalkSpeedValue = Value end
+MiscTab:CreateSlider({
+   Name = "Walk Speed Customizer",
+   Range = {16, 150},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Flag = "SliderSpeed",
+   Callback = function(Value) WalkSpeedValue = Value end,
 })
 
-Tabs.Misc:AddSlider("JumpSlider", {
-    Title = "Jump Power Customizer",
-    Min = 50, Max = 300, Default = 50, Rounding = 0,
-    Callback = function(Value) JumpPowerValue = Value end
+MiscTab:CreateSlider({
+   Name = "Jump Power Customizer",
+   Range = {50, 300},
+   Increment = 1,
+   Suffix = "Power",
+   CurrentValue = 50,
+   Flag = "SliderJump",
+   Callback = function(Value) JumpPowerValue = Value end,
 })
 
 task.spawn(function()
@@ -296,5 +289,3 @@ task.spawn(function()
         task.wait(0.5)
     end
 end)
-
-Window:SelectTab(1)
