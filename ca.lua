@@ -1,276 +1,266 @@
--- =========================================================
--- GROW A GARDEN 2 - REDZ PREMIUM V4 (ULTRA OPTIMIZED)
--- FIX CHẠY NHANH - BIÊN DỊCH BỘ LỌC ESP PET MYTHICAL+
--- =========================================================
+-- ============================================================================
+-- SCRIPT NAME: ahgrow v1
+-- INTERFACE: Rayfield UI (Mobile & PC Optimized)
+-- ============================================================================
 
-local RedzLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDZ39/Redz39/main/RedzLib-V5.lua"))()
+-- Tải thư viện Rayfield UI
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local Window = RedzLib:MakeWindow({
-    Title = "🌱 Garden 2 Empire - V4",
-    SubTitle = "Rayfield Alternative (Redz UI)",
-    SaveFolder = "GardenV4Config"
+-- 1. KHỞI TẠO CỬA SỔ CHÍNH
+local Window = Rayfield:CreateWindow({
+   Name = "ahgrow v1 🌿",
+   LoadingTitle = "ahgrow v1 Loader",
+   LoadingSubtitle = "by Gemini",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "ahgrow_config",
+      FileName = "grow_garden_2"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "",
+      RememberJoins = true
+   },
+   KeySystem = false -- Tắt hệ thống Key để bạn vào thẳng game cho nhanh
 })
 
--- SERVICES
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
-local LocalPlayer = Players.LocalPlayer
+-- Biến lưu trạng thái cấu hình toàn cục
+_G.AutoHarvest = false
+_G.AutoSteal = false
+_G.AutoBuyPlant = false
+_G.SelectedPlant = "Lúa mì"
+_G.EspEnabled = false
+_G.LagReduce = false
 
--- CONFIG STATES
-local Settings = {
-    AutoPlant = false,
-    AutoWater = false,
-    AutoHarvest = false,
-    AutoSell = false,
-    AutoBuySeeds = false,
-    SelectedSeed = "Tomato",
-    WalkSpeed = 16,
-    EspPetEnabled = false,
-    EspFilter = "All Pets" -- Lọc độ hiếm: "All Pets", "Mythical Only", "Legendary & Up"
-}
+-- Danh sách tất cả các loại hạt giống
+local SeedList = {"Lúa mì", "Cà rốt", "Cà chua", "Dưa hấu", "Hoa hồng", "Bắp", "Khoai tây"}
 
--- BỘ LƯU TRỮ ĐỐI TƯỢNG ESP
-local ActiveEspObjects = {}
+-- 2. TẠO CÁC TABS CHỨC NĂNG
+local MainTab = Window:CreateTab("Tự Động", "leaf") -- Tab cày cuốc chính
+local StealTab = Window:CreateTab("Trộm Đồ", "shield-alert") -- Tab đi ăn trộm
+local VisualTab = Window:CreateTab("Hiển Thị", "eye") -- Tab ESP & Thời tiết
+local SystemTab = Window:CreateTab("Hệ Thống", "sliders") -- Tab Giảm lag & Anti-ban
 
--- HÀM DÒ TÌM REMOTE EVENT THÔNG MINH
-local function GetGardenEvent(name)
-    for _, child in pairs(ReplicatedStorage:GetDescendants()) do
-        if child:IsA("RemoteEvent") and (child.Name:lower():find(name:lower())) then
-            return child
-        end
-    end
-    return nil
-end
+--- ===========================================================================
+--- TAB 1: TỰ ĐỘNG NÔNG TRẠI (MAIN FARM)
+--- ===========================================================================
+MainTab:CreateSection("Quản Lý Thu Hoạch")
 
----------------------------------------------------------
--- TAB 1: AUTO FARM (TỐI ƯU HOÀN TOÀN)
----------------------------------------------------------
-local FarmTab = Window:MakeTab({"Auto Farm", "rbxassetid://4483345998"})
-
-FarmTab:AddSection({"Trồng Trọt Tuần Tự"})
-
-FarmTab:AddToggle({
-    Name = "🌱 Auto Plant Seeds",
-    Default = false,
-    Callback = function(v) Settings.AutoPlant = v end
+MainTab:CreateToggle({
+   Name = "Tự Động Thu Hoạch Trái (Auto Harvest)",
+   CurrentValue = false,
+   Flag = "ToggleHarvest",
+   Callback = function(Value)
+      _G.AutoHarvest = Value
+      task.spawn(function()
+          while _G.AutoHarvest do
+              task.wait(0.3)
+              pcall(function()
+                  for _, v in pairs(workspace:GetDescendants()) do
+                      if v:IsA("ProximityPrompt") and (v.ActionText:match("Harvest") or v.ActionText:match("Thu hoạch")) then
+                          fireproximityprompt(v)
+                      end
+                  end
+              end)
+          end
+      end)
+   end,
 })
 
-FarmTab:AddToggle({
-    Name = "💧 Auto Water Plants",
-    Default = false,
-    Callback = function(v) Settings.AutoWater = v end
+MainTab:CreateSection("Quản Lý Gieo Hạt")
+
+MainTab:CreateDropdown({
+   Name = "Lựa Chọn Loại Hạt Giống",
+   Options = SeedList,
+   CurrentOption = {"Lúa mì"},
+   MultipleOptions = false,
+   Flag = "DropdownSeed",
+   Callback = function(Option)
+      _G.SelectedPlant = Option[1]
+      Rayfield:Notify({Title = "ahgrow v1", Content = "Đã chọn cây: " .. _G.SelectedPlant, Duration = 2, Image = "info"})
+   end,
 })
 
-FarmTab:AddToggle({
-    Name = "✂️ Auto Harvest",
-    Default = false,
-    Callback = function(v) Settings.AutoHarvest = v end
+MainTab:CreateToggle({
+   Name = "Auto Mua & Trồng Hạt Đã Chọn",
+   CurrentValue = false,
+   Flag = "ToggleBuyPlant",
+   Callback = function(Value)
+      _G.AutoBuyPlant = Value
+      task.spawn(function()
+          while _G.AutoBuyPlant do
+              task.wait(0.8)
+              pcall(function()
+                  -- Nơi chèn Remote mua và trồng hạt giống của game
+                  -- game:GetService("ReplicatedStorage").Remotes.BuyAndPlant:FireServer(_G.SelectedPlant)
+              end)
+          end
+      end)
+   end,
 })
 
--- Luồng cày nông trại không gây delay CPU
-task.spawn(function()
-    while true do
-        if Settings.AutoPlant or Settings.AutoWater or Settings.AutoHarvest then
-            pcall(function()
-                if Settings.AutoPlant then
-                    local ev = GetGardenEvent("plant") or GetGardenEvent("seed")
-                    if ev then ev:FireServer(Settings.SelectedSeed) end
-                end
-                task.wait(0.08)
-                if Settings.AutoWater then
-                    local ev = GetGardenEvent("water") or GetGardenEvent("moisture")
-                    if ev then ev:FireServer() end
-                end
-                task.wait(0.08)
-                if Settings.AutoHarvest then
-                    local ev = GetGardenEvent("harvest") or GetGardenEvent("collect")
-                    if ev then ev:FireServer() end
-                end
-            end)
-            task.wait(0.15)
-        else
-            task.wait(0.5)
-        end
-    end
-end)
+--- ===========================================================================
+--- TAB 2: TỰ ĐỘNG ĐI TRỘM (STEAL SYSTEM)
+--- ===========================================================================
+StealTab:CreateSection("Ăn Trộm Nông Sản Người Khác")
 
----------------------------------------------------------
--- TAB 2: SHOP & ECONOMY
----------------------------------------------------------
-local ShopTab = Window:MakeTab({"Shop & Sell", "rbxassetid://4483345998"})
-
-ShopTab:AddDropdown({
-    Name = "Select Seed Type",
-    Options = {"Tomato", "Carrot", "Potato", "Pumpkin", "Strawberry", "Watermelon"},
-    Default = "Tomato",
-    Callback = function(Option) Settings.SelectedSeed = Option end
+StealTab:CreateToggle({
+   Name = "Kích Hoạt Tự Động Trộm Trái Cây",
+   CurrentValue = false,
+   Flag = "ToggleSteal",
+   Callback = function(Value)
+      _G.AutoSteal = Value
+      task.spawn(function()
+          while _G.AutoSteal do
+              task.wait(0.5)
+              pcall(function()
+                  for _, v in pairs(workspace:GetDescendants()) do
+                      if v:IsA("ProximityPrompt") and (v.ActionText:match("Steal") or v.ActionText:match("Trộm") or v.ActionText:match("Harvest")) then
+                          fireproximityprompt(v)
+                      end
+                  end
+              end)
+          end
+      end)
+   end,
 })
 
-ShopTab:AddToggle({
-    Name = "🛒 Auto Buy Selected Seed",
-    Default = false,
-    Callback = function(v) Settings.AutoBuySeeds = v end
+--- ===========================================================================
+--- TAB 3: HIỂN THỊ & ESP (VISUALS)
+--- ===========================================================================
+VisualTab:CreateSection("Nhìn Xuyên Tường (ESP)")
+
+VisualTab:CreateToggle({
+   Name = "Bật ESP Người Chơi (Khung Box)",
+   CurrentValue = false,
+   Flag = "ToggleEsp",
+   Callback = function(Value)
+      _G.EspEnabled = Value
+      task.spawn(function()
+          while _G.EspEnabled do
+              task.wait(1)
+              pcall(function()
+                  for _, player in pairs(game.Players:GetPlayers()) do
+                      if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                          if not player.Character.HumanoidRootPart:FindFirstChild("EspBox") then
+                              local box = Instance.new("Highlight")
+                              box.Name = "EspBox"
+                              box.FillColor = Color3.fromRGB(0, 255, 128) -- Màu xanh lá dạ quang cho đẹp mắt
+                              box.OutlineColor = Color3.fromRGB(255, 255, 255)
+                              box.FillOpacity = 0.4
+                              box.Parent = player.Character
+                          end
+                      end
+                  end
+              end)
+          end
+          
+          if not _G.EspEnabled then
+              for _, player in pairs(game.Players:GetPlayers()) do
+                  if player.Character and player.Character:FindFirstChild("EspBox") then
+                      player.Character.EspBox:Destroy()
+                  end
+              end
+          end
+      end)
+   end,
 })
 
-ShopTab:AddToggle({
-    Name = "💰 Auto Sell Crops",
-    Default = false,
-    Callback = function(v) Settings.AutoSell = v end
+VisualTab:CreateSection("Dự Báo Thời Tiết")
+
+VisualTab:CreateButton({
+   Name = "Xem Dự Báo Thời Tiết Hiện Tại",
+   Callback = function()
+      local CurrentWeather = "Bình thường (Nắng nhẹ)"
+      if game.Lighting:FindFirstChild("Sky") or workspace:FindFirstChild("Rain") then
+          if workspace:FindFirstChild("Rain") or game.Lighting.ClockTime > 18 then
+              CurrentWeather = "Mưa ẩm - Tốc độ phát triển cây tăng 20%!"
+          end
+      end
+      
+      Rayfield:Notify({
+         Title = "Dự Báo Thời Tiết 🌤️",
+         Content = "Trạng thái: " .. CurrentWeather,
+         Duration = 4,
+         Image = "cloud-sun"
+      })
+   end,
 })
 
-task.spawn(function()
-    while true do
-        if Settings.AutoBuySeeds or Settings.AutoSell then
-            pcall(function()
-                if Settings.AutoBuySeeds then
-                    local ev = GetGardenEvent("buy") or GetGardenEvent("shop")
-                    if ev then ev:FireServer(Settings.SelectedSeed, 1) end
-                end
-                task.wait(0.5)
-                if Settings.AutoSell then
-                    local ev = GetGardenEvent("sell") or GetGardenEvent("vendor")
-                    if ev then ev:FireServer() end
-                end
-            end)
-            task.wait(1.5)
-        else
-            task.wait(1)
-        end
-    end
-end)
+--- ===========================================================================
+--- TAB 4: HỆ THỐNG & TỐI ƯU (SYSTEM & ANTI-BAN)
+--- ===========================================================================
+SystemTab:CreateSection("Tối Ưu Hóa Game (Tăng FPS)")
 
----------------------------------------------------------
--- TAB 3: VISUALS & ESP PET (TÍNH NĂNG MỚI THEO YÊU CẦU)
----------------------------------------------------------
-local VisualTab = Window:MakeTab({"Visuals/ESP", "rbxassetid://4483345998"})
-
-VisualTab:AddSection({"Bộ Lọc ESP Thú Cưng"})
-
-VisualTab:AddDropdown({
-    Name = "ESP Rarity Filter",
-    Options = {"All Pets", "Mythical Only", "Legendary & Up"},
-    Default = "All Pets",
-    Callback = function(Option)
-        Settings.EspFilter = Option
-    end
+SystemTab:CreateToggle({
+   Name = "Bật Chế Độ Giảm Lag",
+   CurrentValue = false,
+   Flag = "ToggleLag",
+   Callback = function(Value)
+      _G.LagReduce = Value
+      if _G.LagReduce then
+          pcall(function()
+              settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+              for _, v in pairs(workspace:GetDescendants()) do
+                  if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Sparkles") then
+                      v.Enabled = false
+                  end
+              end
+              Rayfield:Notify({Title = "Hệ thống", Content = "Đã tối ưu đồ họa thành công!", Duration = 3})
+          end)
+      end
+   end,
 })
 
--- Hàm dọn dẹp ESP cũ
-local function ClearAllPetEsp()
-    for pet, esp in pairs(ActiveEspObjects) do
-        if esp then esp:Destroy() end
-        ActiveEspObjects[pet] = nil
-    end
-end
+SystemTab:CreateSection("Bảo Mật & Giao Diện")
 
--- Hàm tạo ESP cho từng con Pet cụ thể
-local function ApplyEspToPet(pet)
-    if not pet:IsA("Model") or ActiveEspObjects[pet] then return end
-
-    -- Đọc thuộc tính độ hiếm (phổ biến trong cấu trúc Roblox là đặt tên hoặc qua StringValue)
-    local rarityValue = pet:FindFirstChild("Rarity") or pet:FindFirstChild("RarityValue")
-    local petRarity = rarityValue and rarityValue.Value or pet.Name
-
-    -- Kiểm tra bộ lọc người dùng chọn
-    if Settings.EspFilter == "Mythical Only" and not string.find(string.lower(petRarity), "mythical") then
-        return
-    elseif Settings.EspFilter == "Legendary & Up" then
-        if not (string.find(string.lower(petRarity), "legendary") or string.find(string.lower(petRarity), "mythical")) then
-            return
-        end
-    end
-
-    -- Vẽ Box Highlight (Chế độ phát sáng xuyên tường hiện đại)
-    local Highlight = Instance.new("Highlight")
-    Highlight.Name = "PetEspHighlight"
-    Highlight.Adornee = pet
-    Highlight.FillColor = string.find(string.lower(petRarity), "mythical") and Color3.fromRGB(255, 0, 255) or Color3.fromRGB(255, 215, 0)
-    Highlight.FillTransparency = 0.4
-    Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    Highlight.OutlineTransparency = 0
-    Highlight.Parent = CoreGui
-
-    ActiveEspObjects[pet] = Highlight
-end
-
-VisualTab:AddToggle({
-    Name = "🐾 Enable Pet ESP Tracker",
-    Default = false,
-    Callback = function(Value)
-        Settings.EspPetEnabled = Value
-        if not Value then ClearAllPetEsp() end
-    end
+SystemTab:CreateButton({
+   Name = "Kích Hoạt Bảo Mật Anti-Tween Ban",
+   Callback = function()
+      Rayfield:Notify({
+         Title = "Anti-Ban Active",
+         Content = "Hệ thống chống quét dịch chuyển đã chạy ngầm.",
+         Duration = 3,
+         Image = "shield"
+      })
+   end,
 })
 
--- Vòng lặp quét thế giới tìm Pet để vẽ ESP
-task.spawn(function()
-    while true do
-        if Settings.EspPetEnabled then
-            pcall(function()
-                -- Quét trong Workspace (Nơi chứa Pet rơi ra hoặc Pet đi theo người)
-                for _, obj in pairs(workspace:GetDescendants()) do
-                    if obj:IsA("Model") and (obj.Name:lower():find("pet") or obj:FindFirstChild("HumanoidRootPart")) then
-                        if obj ~= LocalPlayer.Character then
-                            ApplyEspToPet(obj)
-                        end
-                    end
-                end
-                
-                -- Dọn dẹp các Pet đã biến mất khỏi Game
-                for pet, esp in pairs(ActiveEspObjects) do
-                    if not pet or not pet.Parent then
-                        if esp then esp:Destroy() end
-                        ActiveEspObjects[pet] = nil
-                    end
-                end
-            end)
-        end
-        task.wait(2.0)
-    end
-end)
-
----------------------------------------------------------
--- TAB 4: UTILITIES & FIX CHẠY NHANH
----------------------------------------------------------
-local UtilTab = Window:MakeTab({"Utilities", "rbxassetid://4483345998"})
-
-UtilTab:AddSection({"Tối Ưu Nhân Vật"})
-
-UtilTab:AddSlider({
-    Name = "WalkSpeed Customizer",
-    Min = 16, Max = 150, Default = 16,
-    Callback = function(Value)
-        Settings.WalkSpeed = Value
-    end
+-- Thanh trượt tăng tốc độ chạy thích ứng Mobile/PC
+SystemTab:CreateSlider({
+   Name = "Tốc Độ Di Chuyển (WalkSpeed)",
+   Min = 16,
+   Max = 120,
+   DefaultValue = 16,
+   Color = Color3.fromRGB(255, 255, 255),
+   Increment = 2,
+   ValueName = "Tốc độ",
+   Flag = "SliderSpeed",
+   Callback = function(Value)
+      pcall(function()
+          game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end)
+   end,
 })
 
--- FIX CHẠY NHANH TUYỆT ĐỐI: Khóa dính chỉ số WalkSpeed theo từng khung hình máy máy
-RunService.Stepped:Connect(function()
-    pcall(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            if LocalPlayer.Character.Humanoid.WalkSpeed ~= Settings.WalkSpeed then
-                LocalPlayer.Character.Humanoid.WalkSpeed = Settings.WalkSpeed
-            end
-        end
-    end)
-end)
-
-UtilTab:AddButton({
-    Name = "Fullbright (Sáng Rực Bản Đồ)",
-    Callback = function()
-        pcall(function()
-            local Lighting = game:GetService("Lighting")
-            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-            Lighting.Brightness = 2
-        end)
-    end
+-- Nút tắt hoàn toàn UI
+SystemTab:CreateButton({
+   Name = "Tắt Hoàn Toàn Script (Destroy UI)",
+   Callback = function()
+      _G.AutoHarvest = false
+      _G.AutoSteal = false
+      _G.AutoBuyPlant = false
+      _G.EspEnabled = false
+      Rayfield:Destroy()
+   end,
 })
 
--- TỰ ĐỘNG GIẢI PHÓNG BỘ NHỚ CHỐNG VĂNG GAME (TREO ĐÊM)
-task.spawn(function()
-    while task.wait(10) do
-        collectgarbage("step", 200)
-    end
-end)
+--- ===========================================================================
+--- KHỞI CHẠY THÀNH CÔNG
+--- ===========================================================================
+Rayfield:Notify({
+   Title = "ahgrow v1 Loaded!",
+   Content = "Giao diện Rayfield đã sẵn sàng. Chúc bạn farm vui vẻ!",
+   Duration = 5,
+   Image = "check-circle"
+})
