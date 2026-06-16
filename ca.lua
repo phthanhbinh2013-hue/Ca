@@ -3,14 +3,13 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "ahgrow v1 🌿",
    LoadingTitle = "ahgrow v1 Premium",
-   LoadingSubtitle = "Đã sửa lỗi & Tối ưu hóa hệ thống",
+   LoadingSubtitle = "Bản Vá Lỗi Di Chuyển Thực Tế",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
 })
 
 _G.AutoHarvest = false
 _G.AutoSteal = false
-_G.AutoBuyPlant = false
 _G.AutoSellAll = false
 _G.TargetPlayer = ""
 _G.FlingLoop = false
@@ -24,6 +23,17 @@ local TrollTab = Window:CreateTab("Phá Hoại", "zap")
 local ShopTab = Window:CreateTab("Cửa Hàng", "shopping-cart")
 local SystemTab = Window:CreateTab("Hệ Thống", "sliders")
 
+local function safeTeleport(targetCFrame)
+    local player = game.Players.LocalPlayer
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local tweenService = game:GetService("TweenService")
+        local info = TweenInfo.new(0.5, Enum.EasingStyle.Linear)
+        local tween = tweenService:Create(player.Character.HumanoidRootPart, info, {CFrame = targetCFrame})
+        tween:Play()
+        tween.Completed:Wait()
+    end
+end
+
 MainTab:CreateSection("Quản Lý Thu Hoạch & Gieo Hạt")
 
 MainTab:CreateToggle({
@@ -34,11 +44,15 @@ MainTab:CreateToggle({
       _G.AutoHarvest = Value
       task.spawn(function()
           while _G.AutoHarvest do
-              task.wait(0.2)
+              task.wait(0.5)
               pcall(function()
                   for _, v in pairs(workspace:GetDescendants()) do
-                      if v:IsA("ProximityPrompt") and (v.ActionText:match("Harvest") or v.ActionText:match("Thu hoạch")) then
-                          fireproximityprompt(v)
+                      if v:IsA("ProximityPrompt") and (v.ActionText:match("Harvest") or v.ActionText:match("Thu hoạch") or v.ActionText:match("Pick")) then
+                          if v.Parent and v.Parent:IsA("BasePart") then
+                              safeTeleport(v.Parent.CFrame * CFrame.new(0, 2, 0))
+                              task.wait(0.1)
+                              fireproximityprompt(v)
+                          end
                       end
                   end
               end)
@@ -68,13 +82,17 @@ StealTab:CreateToggle({
       _G.AutoSteal = Value
       task.spawn(function()
           while _G.AutoSteal do
-              task.wait(0.3)
+              task.wait(0.5)
               pcall(function()
                   local clockTime = game.Lighting.ClockTime
                   if clockTime >= 18 or clockTime <= 5 then
                       for _, v in pairs(workspace:GetDescendants()) do
                           if v:IsA("ProximityPrompt") and (v.ActionText:match("Steal") or v.ActionText:match("Trộm")) then
-                              fireproximityprompt(v)
+                              if v.Parent and v.Parent:IsA("BasePart") then
+                                  safeTeleport(v.Parent.CFrame * CFrame.new(0, 2, 0))
+                                  task.wait(0.1)
+                                  fireproximityprompt(v)
+                              end
                           end
                       end
                   end
@@ -142,10 +160,9 @@ ShopTab:CreateToggle({
           while _G.AutoSellAll do
               task.wait(1)
               pcall(function()
-                  local sellZone = workspace:FindFirstChild("SellZone") or workspace:FindFirstChild("SellPart")
-                  if sellZone then
-                      firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, sellZone, 0)
-                      firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, sellZone, 1)
+                  local sellZone = workspace:FindFirstChild("SellZone") or workspace:FindFirstChild("SellPart") or workspace:FindFirstChild("Sell")
+                  if sellZone and sellZone:IsA("BasePart") then
+                      safeTeleport(sellZone.CFrame * CFrame.new(0, 2, 0))
                   end
               end)
           end
