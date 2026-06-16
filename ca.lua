@@ -1,474 +1,170 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- ==========================================
+-- NEONFISH ULTIMATE MOBILE v4.0 (TÂM CÁ ĐỨNG YÊN)
+-- THIẾT KẾ ĐƠN TRANG - TỐI ƯU HÓA HIỆU NĂNG
+-- ==========================================
 
-local Window = Rayfield:CreateWindow({
-   Name = "🐟 NeonFish Ultimate Mobile V6 (Pure Performance)",
-   LoadingTitle = "Bypassing Render Overhead...",
-   LoadingSubtitle = "High Efficiency Mobile Mode Active",
-   ConfigurationSaving = { Enabled = false },
-   Discord = { Enabled = false },
-   KeySystem = false
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+
+local Window = OrionLib:MakeWindow({
+    Name = "🐟 NeonFish v4.0 (Single Page)", 
+    HidePremium = true, 
+    SaveConfig = false, 
+    ConfigFolder = "NeonFishV4",
+    IntroText = "Loading NeonFish v4.0..."
 })
 
--- CORE SYSTEMS & REPLICATED STORAGE REFS
-local LocalPlayer = game.Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+-- CORE SERVICES
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-
-LocalPlayer.CharacterAdded:Connect(function(char)
-    Character = char
-end)
+local LocalPlayer = Players.LocalPlayer
 
 -- GLOBAL AUTOMATION STATES
-local AutoEquip = false
-local AutoCast = false
-local AutoShake = false
-local MultiCast = false
+local MasterFarm = false
 local AutoBuyBait = false
 local SelectedBaitName = "Basic Bait"
-local FishingSpeedMode = "Instant" 
+local FishingSpeedMode = "Instant"
 
--- ESP MEMORY ARRAYS
-local PlayerESP_Storage = {}
-local IslandESP_Storage = {}
-local NpcESP_Storage = {}
+---------------------------------------------------------
+-- GOM TOÀN BỘ VÀO MỘT TRANG CHÍNH (MAIN HUB)
+---------------------------------------------------------
+local MainTab = Window:MakeTab({Name = "Main Hub", Icon = "rbxassetid://4483345998"})
 
--- MOBILE GARBAGE CLEANER (CPU STABILITY ENGINE)
-task.spawn(function()
-    while task.wait(5) do
-        pcall(function()
-            setfpscap(60)
-            collectgarbage("step", 100)
-        end)
-    end
-end)
-
-------------------------------------------------------------------------
--- TAB 1: ULTIMATE FISHING ENGINE (MAX SPEED & RELIABILITY)
-------------------------------------------------------------------------
-local MainTab = Window:CreateTab("Neon Fishing", "fish")
-
-MainTab:CreateToggle({
-   Name = "Auto Equip Fishing Rod",
-   CurrentValue = false,
-   Flag = "ToggleEquip",
-   Callback = function(Value)
-      AutoEquip = Value
-      task.spawn(function()
-         while AutoEquip do
-            if not AutoEquip then break end
-            if not Character:FindFirstChildOfClass("Tool") then
-               local Backpack = LocalPlayer:FindFirstChild("Backpack")
-               if Backpack then
-                  for _, tool in pairs(Backpack:GetChildren()) do
-                     if tool:IsA("Tool") and (tool.Name:lower():find("rod") or tool:FindFirstChild("Click")) then
-                        Character.Humanoid:EquipTool(tool)
-                        break
-                     end
-                  end
-               end
-            end
-            task.wait(0.3)
-         end
-      end)
-   end
-})
-
-MainTab:CreateToggle({
-   Name = "Auto Perfect Cast (Instant Release)",
-   CurrentValue = false,
-   Flag = "ToggleCast",
-   Callback = function(Value)
-      AutoCast = Value
-      task.spawn(function()
-         while AutoCast do
-            if not AutoCast then break end
-            local Tool = Character:FindFirstChildOfClass("Tool")
-            if Tool and Tool:FindFirstChild("Click") then
-               Tool.Click:Activate()
-               
-               local CastEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("cast")
-               if CastEvent then
-                  local loopCount = MultiCast and 3 or 1
-                  for i = 1, loopCount do
-                     CastEvent:FireServer(100, true)
-                     if MultiCast then task.wait(0.05) end
-                  end
-               end
-            end
-            task.wait(7.5) -- Optimized recast timing
-         end
-      end)
-   end
-})
-
-MainTab:CreateToggle({
-   Name = "Enable Multi-Cast Bait (Spam Packets)",
-   CurrentValue = false,
-   Flag = "ToggleMultiCast",
-   Callback = function(Value)
-      MultiCast = Value
-   end
-})
-
-MainTab:CreateToggle({
-   Name = "Auto Shake UI (Frame-Skip Clicker)",
-   CurrentValue = false,
-   Flag = "ToggleShake",
-   Callback = function(Value)
-      AutoShake = Value
-      task.spawn(function()
-         while AutoShake do
-            if not AutoShake then break end
-            pcall(function()
-               local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-               if PlayerGui:FindFirstChild("Shake") then
-                  local ShakeUI = PlayerGui.Shake
-                  if ShakeUI:FindFirstChild("button") and ShakeUI.button.Visible then
-                     local SafeEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("shake")
-                     if SafeEvent then
-                        SafeEvent:FireServer()
-                     end
-                  end
-               end
-            end)
-            task.wait(0.01)
-         end
-      end)
-   end
-})
-
-MainTab:CreateDropdown({
-   Name = "Select Fishing Speed Mode",
-   Options = {"Instant", "Legit Perfect Center"},
-   CurrentOption = {"Instant"},
-   MultipleOptions = false,
-   Callback = function(Options)
-      FishingSpeedMode = Options[1]
-   end,
-})
-
--- HIGH-SPEED REEL CONTROLLER (DIRECT HEARTBEAT ATTACHMENT)
-RunService.Heartbeat:Connect(function()
-    pcall(function()
-        local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-        if PlayerGui:FindFirstChild("Reel") then
-            local Reel = PlayerGui.Reel
-            local Bar = Reel:FindFirstChild("Bar")
-            local FishTarget = Reel:FindFirstChild("Fish")
-            
-            if Bar then
-               local ReelFinishEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("reelfinish")
-               
-               if FishingSpeedMode == "Instant" then
-                  if ReelFinishEvent then
-                     ReelFinishEvent:FireServer(100, true)
-                  end
-               elseif FishingSpeedMode == "Legit Perfect Center" and FishTarget then
-                  -- Locked Center Algorithm: Zero deviation frame-by-frame tracking
-                  Bar.Position = FishTarget.Position
-                  if ReelFinishEvent then
-                     ReelFinishEvent:FireServer(100, false)
-                  end
-               end
-            end
-         end
-    end)
-end)
-
--- AUTO STUCK CLEANER
-task.spawn(function()
-   while true do
-      task.wait(3)
-      pcall(function()
-         local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-         if PlayerGui:FindFirstChild("Reel") and not Character:FindFirstChildOfClass("Tool") then
-            PlayerGui.Reel:Destroy()
-            if PlayerGui:FindFirstChild("Cast") then PlayerGui.Cast:Destroy() end
-            if PlayerGui:FindFirstChild("Shake") then PlayerGui.Shake:Destroy() end
-         end
-      end)
-   end
-end)
-
-------------------------------------------------------------------------
--- TAB 2: AUTO SUPPLY & SHOP MODS
-------------------------------------------------------------------------
-local ShopTab = Window:CreateTab("Auto Shop", "shopping-cart")
-
-local BaitList = {"Basic Bait", "Worm Bait", "Shrimp Bait", "Minnow Bait", "Squid Bait"}
-
-ShopTab:CreateDropdown({
-   Name = "Select Bait Type To Buy",
-   Options = BaitList,
-   CurrentOption = {"Basic Bait"},
-   MultipleOptions = false,
-   Callback = function(Options)
-      SelectedBaitName = Options[1]
-   end,
-})
-
-ShopTab:CreateToggle({
-   Name = "Auto Buy Selected Bait (When Out)",
-   CurrentValue = false,
-   Flag = "ToggleBuyBait",
-   Callback = function(Value)
-      AutoBuyBait = Value
-      task.spawn(function()
-         while AutoBuyBait do
-            if not AutoBuyBait then break end
-            pcall(function()
-               local BaitEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("buybait")
-               if BaitEvent then
-                  BaitEvent:FireServer(SelectedBaitName, 1)
-               end
-            end)
-            task.wait(2.5) -- Safe interval to prevent network congestion
-         end
-      end)
-   end
-})
-
-------------------------------------------------------------------------
--- TAB 3: SEPARATED ADVANCED VISUAL REPLICATOR (LIGHTWEIGHT)
-------------------------------------------------------------------------
-local VisualsTab = Window:CreateTab("Visual Monitors", "eye")
-
-local function GenerateLabel(target, name, color, storage)
-   if storage[target] then return end
-   
-   local Billboard = Instance.new("BillboardGui")
-   Billboard.Size = UDim2.new(0, 160, 0, 40)
-   Billboard.AlwaysOnTop = true
-   Billboard.Adornee = target
-   
-   local Label = Instance.new("TextLabel")
-   Label.Size = UDim2.new(1, 0, 1, 0)
-   Label.BackgroundTransparency = 1
-   Label.TextColor3 = color
-   Label.TextStrokeTransparency = 0.4
-   Label.TextSize = 11
-   Label.Font = Enum.Font.SourceSansBold
-   Label.Text = name
-   Label.Parent = Billboard
-   
-   Billboard.Parent = target
-   storage[target] = Billboard
-end
-
-VisualsTab:CreateToggle({
-   Name = "ESP Tracker: Show Active Players",
-   CurrentValue = false,
-   Flag = "TogglePlayerESP",
-   Callback = function(Value)
-      if Value then
-         task.spawn(function()
-            while task.wait(4) do -- Optimized long delay step for mobile CPU cooling
-               if not Value then break end
-               for _, p in pairs(Players:GetPlayers()) do
-                  if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                     GenerateLabel(p.Character.HumanoidRootPart, "[Player] " .. p.Name, Color3.fromRGB(0, 240, 255), PlayerESP_Storage)
-                  end
-               end
-            end
-         end)
-      else
-         for target, gui in pairs(PlayerESP_Storage) do if gui then gui:Destroy() end end
-         table.clear(PlayerESP_Storage)
-      end
-   end
-})
-
-VisualsTab:CreateToggle({
-   Name = "ESP Tracker: Show Islands Name",
-   CurrentValue = false,
-   Flag = "ToggleIslandESP",
-   Callback = function(Value)
-      if Value then
-         local RootTargets = {workspace, workspace:FindFirstChild("World"), workspace:FindFirstChild("Islands")}
-         for _, layer in pairs(RootTargets) do
-            if layer then
-               for _, obj in pairs(layer:GetChildren()) do
-                  if obj:IsA("BasePart") or obj:FindFirstChildOfClass("BasePart") then
-                     local node = obj:IsA("BasePart") and obj or obj:FindFirstChildOfClass("BasePart")
-                     if obj.Name:lower():find("island") or obj.Name:lower():find("zone") or obj.Name == "Moosewood" then
-                        GenerateLabel(node, "[Island] " .. obj.Name, Color3.fromRGB(255, 230, 0), IslandESP_Storage)
-                     end
-                  end
-               end
-            end
-         end
-      else
-         for target, gui in pairs(IslandESP_Storage) do if gui then gui:Destroy() end end
-         table.clear(IslandESP_Storage)
-      end
-   end
-})
-
-VisualsTab:CreateToggle({
-   Name = "ESP Tracker: Show NPCs Vendor",
-   CurrentValue = false,
-   Flag = "ToggleNpcESP",
-   Callback = function(Value)
-      if Value then
-         local NpcLayer = workspace:FindFirstChild("NPCs") or workspace:FindFirstChild("WorldNPCs")
-         if NpcLayer then
-            for _, npc in pairs(NpcLayer:GetChildren()) do
-               if npc:FindFirstChild("HumanoidRootPart") then
-                  GenerateLabel(npc.HumanoidRootPart, "[NPC] " .. npc.Name, Color3.fromRGB(50, 255, 50), NpcESP_Storage)
-               end
-            end
-         end
-      else
-         for target, gui in pairs(NpcESP_Storage) do if gui then gui:Destroy() end end
-         table.clear(NpcESP_Storage)
-      end
-   end
-})
-
-------------------------------------------------------------------------
--- TAB 4: ISLAND TELEPORT INTERFACE
-------------------------------------------------------------------------
-local TeleportTab = Window:CreateTab("Island Map TP", "map-pin")
-
-local IslandsData = {
-    ["Moosewood (Starter)"] = Vector3.new(370, 134, 250),
-    ["Snowcap Island"] = Vector3.new(2622, 135, 2380),
-    ["Roslit Volcano"] = Vector3.new(-1800, 140, -800),
-    ["Coral Reef"] = Vector3.new(-200, 120, 1200),
-    ["Sunken Ship"] = Vector3.new(2900, 115, -1700),
-}
-
-local IslandList = {}
-for name, _ in pairs(IslandsData) do table.insert(IslandList, name) end
-local SelectedIsland = "Moosewood (Starter)"
-
-TeleportTab:CreateDropdown({
-   Name = "Select Coordinates Target",
-   Options = IslandList,
-   CurrentOption = {SelectedIsland},
-   MultipleOptions = false,
-   Callback = function(Options) SelectedIsland = Options[1] end,
- })
-
-TeleportTab:CreateButton({
-   Name = "Execute Warp to Island Vector",
-   Callback = function()
-      local TargetPos = IslandsData[SelectedIsland]
-      if TargetPos and Character:FindFirstChild("HumanoidRootPart") then
-         Character.HumanoidRootPart.CFrame = CFrame.new(TargetPos)
-      end
-   end,
-})
-
-------------------------------------------------------------------------
--- TAB 5: ACTIVE SERVERS USER WARP
-------------------------------------------------------------------------
-local PlayerTab = Window:CreateTab("Target User TP", "users")
-local SelectedPlayerName = ""
-
-local function GetPlayerNames()
-    local names = {}
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then table.insert(names, p.Name) end
-    end
-    return names
-end
-
-local PlayerDropdown = PlayerTab:CreateDropdown({
-   Name = "Select Target Profile Identity",
-   Options = GetPlayerNames(),
-   CurrentOption = {""},
-   MultipleOptions = false,
-   Callback = function(Options) SelectedPlayerName = Options[1] end,
-})
-
-Players.PlayerAdded:Connect(function() PlayerDropdown:Refresh(GetPlayerNames()) end)
-Players.PlayerRemoving:Connect(function() PlayerDropdown:Refresh(GetPlayerNames()) end)
-
-PlayerTab:CreateButton({
-   Name = "Execute Teleport to Target Vector",
-   Callback = function()
-      if SelectedPlayerName ~= "" then
-         local TargetPlayer = Players:FindFirstChild(SelectedPlayerName)
-         if TargetPlayer and TargetPlayer.Character and TargetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            if Character:FindFirstChild("HumanoidRootPart") then
-               Character.HumanoidRootPart.CFrame = TargetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
-            end
-         end
-      end
-   end,
-})
-
-------------------------------------------------------------------------
--- TAB 6: CHARACTER UTILITIES MOD
-------------------------------------------------------------------------
-local MiscTab = Window:CreateTab("Character Hack", "sliders")
-local Noclip = false
-local Fullbright = false
-local WalkSpeedValue = 16
-local JumpPowerValue = 50
-
-MiscTab:CreateToggle({
-   Name = "Noclip Status (Phase Through Collisions)",
-   CurrentValue = false,
-   Flag = "ToggleNoclip",
-   Callback = function(Value) Noclip = Value end
-})
-
-RunService.Stepped:Connect(function()
-    if Noclip and Character then
-        for _, part in pairs(Character:GetChildren()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
-        end
-    end
-end)
-
-MiscTab:CreateToggle({
-   Name = "Fullbright Status (Permanent Light Vision)",
-   CurrentValue = false,
-   Flag = "ToggleBright",
-   Callback = function(Value)
-      Fullbright = Value
-      if Fullbright then
-         game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
-         game:GetService("Lighting").Brightness = 2
-      else
-         game:GetService("Lighting").Ambient = Color3.fromRGB(130, 130, 130)
-      end
-   end
-})
-
-MiscTab:CreateSlider({
-   Name = "Velocity Walk Speed Modifier",
-   Range = {16, 150},
-   Increment = 1,
-   Suffix = "WalkSpeed",
-   CurrentValue = 16,
-   Flag = "SliderSpeed",
-   Callback = function(Value) WalkSpeedValue = Value end,
-})
-
-MiscTab:CreateSlider({
-   Name = "Velocity Jump Height Modifier",
-   Range = {50, 300},
-   Increment = 1,
-   Suffix = "JumpPower",
-   CurrentValue = 50,
-   Flag = "SliderJump",
-   Callback = function(Value) JumpPowerValue = Value end,
-})
-
+-- Hệ thống hiển thị FPS động ổn định
+local FpsLabel = MainTab:AddLabel("FPS: Calculating...")
 task.spawn(function()
     while true do
-        pcall(function()
-            if Character and Character:FindFirstChild("Humanoid") then
-                Character.Humanoid.WalkSpeed = WalkSpeedValue
-                Character.Humanoid.JumpPower = JumpPowerValue
-                Character.Humanoid.UseJumpPower = true
-            end
-        end)
-        task.wait(0.5)
+        local fps = math.floor(1 / RunService.RenderStepped:Wait())
+        FpsLabel:Set("FPS: " .. fps)
+        task.wait(1)
     end
 end)
+
+MainTab:AddLabel("--- FISHING CONFIGURATION ---")
+
+-- Lựa chọn tốc độ câu cá (Nhanh / Cá ở giữa thanh)
+MainTab:AddDropdown({
+    Name = "Fishing Speed Mode",
+    Default = "Instant",
+    Options = {"Instant", "Fish Lock Center Bar"},
+    Callback = function(Value) 
+        FishingSpeedMode = Value 
+    end
+})
+
+-- Nút khởi động câu cá All-in-One chất lượng cao
+MainTab:AddToggle({
+    Name = "🔥 Master Auto Farm Fish",
+    Default = false,
+    Callback = function(Value)
+        MasterFarm = Value
+    end
+})
+
+MainTab:AddLabel("--- EXPANDED BAIT SHOP ---")
+
+-- Danh sách mồi mở rộng nằm ngay trên màn hình chính
+MainTab:AddDropdown({
+    Name = "Select Bait Type",
+    Default = "Basic Bait",
+    Options = {"Basic Bait", "Worm Bait", "Shrimp Bait", "Minnow Bait", "Squid Bait", "Fish Head Bait", "Bagel Bait", "Insect Bait"},
+    Callback = function(Value) 
+        SelectedBaitName = Value 
+    end
+})
+
+-- Tự động mua mồi khi hết
+MainTab:AddToggle({
+    Name = "Auto Buy Selected Bait",
+    Default = false,
+    Callback = function(Value)
+        AutoBuyBait = Value
+        task.spawn(function()
+            while AutoBuyBait do
+                if not AutoBuyBait then break end
+                pcall(function()
+                    local BaitEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("buybait")
+                    if BaitEvent then 
+                        BaitEvent:FireServer(SelectedBaitName, 1) 
+                    end
+                end)
+                task.wait(3.0) -- Giãn cách đồng bộ an toàn chống nghẽn gói tin
+            end
+        end)
+    end
+})
+
+---------------------------------------------------------
+-- THUẬT TOÁN ĐỒNG BỘ CHÍNH XÁC CAO VÀ CHỐNG KẸT UI
+---------------------------------------------------------
+task.spawn(function()
+    while true do
+        if MasterFarm then
+            pcall(function()
+                local Character = LocalPlayer.Character
+                local Backpack = LocalPlayer:FindFirstChild("Backpack")
+                local PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
+                
+                -- Bước 1: Tự động cầm cần câu
+                if Character and not Character:FindFirstChildOfClass("Tool") and Backpack then
+                    for _, v in pairs(Backpack:GetChildren()) do
+                        if v:IsA("Tool") and (v.Name:lower():find("rod") or v:FindFirstChild("Click")) then
+                            Character.Humanoid:EquipTool(v)
+                            task.wait(0.3)
+                            break
+                        end
+                    end
+                end
+                
+                -- Bước 2: Tự động thả câu tuần tự
+                local Tool = Character and Character:FindFirstChildOfClass("Tool")
+                if Tool and Tool:FindFirstChild("Click") and PlayerGui then
+                    if not PlayerGui:FindFirstChild("Reel") and not PlayerGui:FindFirstChild("Cast") then
+                        Tool.Click:Activate()
+                        local cast = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("cast")
+                        if cast then cast:FireServer(100, true) end
+                        task.wait(1.2)
+                    end
+                    
+                    -- Bước 3: Tự động nhấp Shake UI siêu tốc (Auto Shake)
+                    if PlayerGui:FindFirstChild("Shake") then
+                        local btn = PlayerGui.Shake:FindFirstChild("button")
+                        if btn and btn.Visible then
+                            local shake = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("shake")
+                            if shake then shake:FireServer() end
+                        end
+                    end
+                end
+            end)
+        end
+        task.wait(0.05) -- Chu kỳ quét đồng bộ tốc độ cao của v4.0
+    end
+end)
+
+-- XỬ LÝ KÉO CẦU (Đồng bộ trực tiếp theo Khung hình Server)
+RunService.Stepped:Connect(function()
+    if MasterFarm then
+        pcall(function()
+            local PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
+            local Reel = PlayerGui and PlayerGui:FindFirstChild("Reel")
+            if Reel then
+                local finish = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("reelfinish")
+                
+                if FishingSpeedMode == "Instant" then
+                    if finish then finish:FireServer(100, true) end
+                elseif FishingSpeedMode == "Fish Lock Center Bar" then
+                    local Bar = Reel:FindFirstChild("Bar")
+                    local Fish = Reel:FindFirstChild("Fish")
+                    if Bar and Fish then 
+                        -- THUẬT TOÁN MỚI: Ép con cá phải dính chặt vào chính giữa thanh câu của bạn
+                        Fish.Position = Bar.Position
+                    end
+                    if finish then finish:FireServer(100, false) end
+                end
+            end
+        end)
+    end
+end)
+
+-- KHỞI TẠO ORION SYSTEM
+OrionLib:Init()
