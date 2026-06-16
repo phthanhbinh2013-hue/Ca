@@ -1,9 +1,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "🐟 Fisch Hub V5 | ULTIMATE ANTI-BAN",
-   LoadingTitle = "Initializing Core Anti-Cheat Bypass...",
-   LoadingSubtitle = "Secure Architecture Active",
+   Name = "🐟 NeonFish Ultimate Mobile V6",
+   LoadingTitle = "Optimizing Mobile Garbage Collector...",
+   LoadingSubtitle = "Secure Mobile Framework Active",
    ConfigurationSaving = { Enabled = false },
    Discord = { Enabled = false },
    KeySystem = false
@@ -33,12 +33,10 @@ local IslandESP_Storage = {}
 local NpcESP_Storage = {}
 
 ------------------------------------------------------------------------
--- 🛡️ SECURE MODULE: ADVANCED ANTI-BAN & MEMORY SPOOFER
+-- 🛡️ ADVANCED MOBILE ANTI-BAN & MEMORY SPOOFER (FIXED & SECURED)
 ------------------------------------------------------------------------
--- Block and spoof game index lookups to hide modified humanoid behaviors
 local RawMetatable = getrawmetatable(game)
 local OldIndex = RawMetatable.__index
-local OldNewIndex = RawMetatable.__newindex
 setreadonly(RawMetatable, false)
 
 RawMetatable.__index = newcclosure(function(self, key)
@@ -48,31 +46,37 @@ RawMetatable.__index = newcclosure(function(self, key)
     end
     return OldIndex(self, key)
 end)
-
 setreadonly(RawMetatable, true)
 
--- Admin / Staff Watchdog Tracker
-task.spawn(function()
-    while task.wait(3) do
-        pcall(function()
-            for _, player in pairs(Players:GetPlayers()) do
-                if player:IsInGroup(game.CreatorId) or player.AccountAge < 2 then
-                    Rayfield:Notify({
-                        Name = "⚠️ SECURITY ALERT",
-                        Content = "Potential Admin/Staff/Alt detected in server: " .. player.Name,
-                        Duration = 5,
-                        Image = "alert-octagon"
-                    })
-                end
+-- Admin Detect Watchdog (Security Event)
+RunService.Heartbeat:Connect(function()
+    pcall(function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player:IsInGroup(game.CreatorId) or (player.AccountAge < 1 and player ~= LocalPlayer) then
+                Rayfield:Notify({
+                    Name = "⚠️ ANTI-STAFF PROTECTION",
+                    Content = "Staff or Alt detected: " .. player.Name .. ". Play safely!",
+                    Duration = 3,
+                    Image = "shield-alert"
+                })
             end
-        end)
+        end
+    end)
+end)
+
+-- MOBILE PERFORMANCE OPTIMIZER (Garbage Collection & Memory Cleaner)
+task.spawn(function()
+    while task.wait(10) do
+        -- Periodically forces unused memory release to prevent mobile client crashes
+        setfpscap(60)
+        collectgarbage("collect")
     end
 end)
 
 ------------------------------------------------------------------------
--- TAB 1: PERFECT FISHING ENGINE (WITH ANTI-DETECTION HUMANIZATION)
+-- TAB 1: PERFECT FISHING ENGINE (DUAL METHOD MOBILE EXCLUSIVE)
 ------------------------------------------------------------------------
-local MainTab = Window:CreateTab("Perfect Fishing", "fish")
+local MainTab = Window:CreateTab("Neon Fishing", "fish")
 
 MainTab:CreateToggle({
    Name = "Auto Equip Fishing Rod",
@@ -94,7 +98,7 @@ MainTab:CreateToggle({
                   end
                end
             end
-            task.wait(0.6) -- Humanized interval
+            task.wait(0.6)
          end
       end)
    end
@@ -129,7 +133,7 @@ MainTab:CreateToggle({
 })
 
 MainTab:CreateToggle({
-   Name = "Enable Multi-Cast Bait (Spam Packet Mode)",
+   Name = "Enable Multi-Cast Bait (Spam Packets)",
    CurrentValue = false,
    Flag = "ToggleMultiCast",
    Callback = function(Value)
@@ -138,7 +142,7 @@ MainTab:CreateToggle({
 })
 
 MainTab:CreateToggle({
-   Name = "Auto Shake UI (Anti-Stuck Bypass)",
+   Name = "Auto Shake UI (Anti-Stuck Clicker)",
    CurrentValue = false,
    Flag = "ToggleShake",
    Callback = function(Value)
@@ -158,16 +162,15 @@ MainTab:CreateToggle({
                   end
                end
             end)
-            -- Random micro-delay to prevent server-side click pattern logging
-            task.wait(0.02 + math.random(0, 20) / 1000)
+            task.wait(0.03 + math.random(0, 15) / 1000) -- Safe random interval for mobile CPU stability
          end
       end)
    end
 })
 
 MainTab:CreateDropdown({
-   Name = "Select Fishing Speed / Style",
-   Options = {"Instant", "Legit Smooth"},
+   Name = "Select Fishing Speed Mode",
+   Options = {"Instant", "Legit Perfect Center"},
    CurrentOption = {"Instant"},
    MultipleOptions = false,
    Callback = function(Options)
@@ -175,12 +178,11 @@ MainTab:CreateDropdown({
    end,
 })
 
--- REEL SYSTEM WITH MATHEMATICAL HUMANIZATION BIAS
-task.spawn(function()
-   while true do
-      pcall(function()
-         local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-         if PlayerGui:FindFirstChild("Reel") then
+-- MOBILE HIGH-PRECISION DUAL-MODE REEL LOOPER
+RunService.Heartbeat:Connect(function()
+    pcall(function()
+        local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+        if PlayerGui:FindFirstChild("Reel") then
             local Reel = PlayerGui.Reel
             local Bar = Reel:FindFirstChild("Bar")
             local FishTarget = Reel:FindFirstChild("Fish")
@@ -189,30 +191,28 @@ task.spawn(function()
                local ReelFinishEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("reelfinish")
                
                if FishingSpeedMode == "Instant" then
+                  -- Mode 1: Instant Server Teleportation Catch
                   if ReelFinishEvent then
                      ReelFinishEvent:FireServer(100, true)
-                     task.wait(0.4)
                   end
-               elseif FishingSpeedMode == "Legit Smooth" and FishTarget then
-                  -- Adds small natural variance so the bar smoothly floats slightly over target center
-                  local humanVariance = UDim2.new(FishTarget.Position.X.Scale, math.random(-2, 2), FishTarget.Position.Y.Scale, 0)
-                  Bar.Position = humanVariance
+               elseif FishingSpeedMode == "Legit Perfect Center" and FishTarget then
+                  -- Mode 2: Perfect Mathematical Center Tracking (Zero Failures)
+                  -- Keeps the fish precisely centered inside the player's catch bar
+                  Bar.Position = UDim2.new(FishTarget.Position.X.Scale, 0, FishTarget.Position.Y.Scale, 0)
                   
                   if ReelFinishEvent then
-                     ReelFinishEvent:FireServer(50, false)
+                     ReelFinishEvent:FireServer(100, false)
                   end
                end
             end
          end
-      end)
-      task.wait(0.03)
-   end
+    end)
 end)
 
 -- ABSOLUTE STUCK FIX CLEANER ENGINE
 task.spawn(function()
    while true do
-      task.wait(5)
+      task.wait(4)
       pcall(function()
          local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
          if PlayerGui:FindFirstChild("Reel") and not Character:FindFirstChildOfClass("Tool") then
@@ -225,7 +225,7 @@ task.spawn(function()
 end)
 
 ------------------------------------------------------------------------
--- TAB 2: SEPARATED ADVANCED VISUAL REPLICATOR (ESP MODULES)
+-- TAB 2: SEPARATED ADVANCED VISUAL REPLICATOR (MOBILE OPTIMIZED ESP)
 ------------------------------------------------------------------------
 local VisualsTab = Window:CreateTab("Visual Monitors", "eye")
 
@@ -233,7 +233,7 @@ local function GenerateLabel(target, name, color, storage)
    if storage[target] then return end
    
    local Billboard = Instance.new("BillboardGui")
-   Billboard.Size = UDim2.new(0, 220, 0, 60)
+   Billboard.Size = UDim2.new(0, 180, 0, 45) -- Scaled down down for mobile layouts
    Billboard.AlwaysOnTop = true
    Billboard.Adornee = target
    
@@ -241,8 +241,8 @@ local function GenerateLabel(target, name, color, storage)
    Label.Size = UDim2.new(1, 0, 1, 0)
    Label.BackgroundTransparency = 1
    Label.TextColor3 = color
-   Label.TextStrokeTransparency = 0.1
-   Label.TextSize = 13
+   Label.TextStrokeTransparency = 0.3
+   Label.TextSize = 11 -- Optimized text scaling
    Label.Font = Enum.Font.SourceSansBold
    Label.Text = name
    Label.Parent = Billboard
@@ -258,11 +258,11 @@ VisualsTab:CreateToggle({
    Callback = function(Value)
       if Value then
          task.spawn(function()
-            while task.wait(2) do
+            while task.wait(3) do -- Increased wait step to reduce CPU latency on mobile
                if not Value then break end
                for _, p in pairs(Players:GetPlayers()) do
                   if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                     GenerateLabel(p.Character.HumanoidRootPart, "[Active User] " .. p.Name, Color3.fromRGB(0, 240, 255), PlayerESP_Storage)
+                     GenerateLabel(p.Character.HumanoidRootPart, "[Player] " .. p.Name, Color3.fromRGB(0, 240, 255), PlayerESP_Storage)
                   end
                end
             end
@@ -287,7 +287,7 @@ VisualsTab:CreateToggle({
                   if obj:IsA("BasePart") or obj:FindFirstChildOfClass("BasePart") then
                      local node = obj:IsA("BasePart") and obj or obj:FindFirstChildOfClass("BasePart")
                      if obj.Name:lower():find("island") or obj.Name:lower():find("zone") or obj.Name == "Moosewood" then
-                        GenerateLabel(node, "[Location] " .. obj.Name, Color3.fromRGB(255, 230, 0), IslandESP_Storage)
+                        GenerateLabel(node, "[Island] " .. obj.Name, Color3.fromRGB(255, 230, 0), IslandESP_Storage)
                      end
                   end
                end
@@ -310,7 +310,7 @@ VisualsTab:CreateToggle({
          if NpcLayer then
             for _, npc in pairs(NpcLayer:GetChildren()) do
                if npc:FindFirstChild("HumanoidRootPart") then
-                  GenerateLabel(npc.HumanoidRootPart, "[NPC Vendor] " .. npc.Name, Color3.fromRGB(50, 255, 50), NpcESP_Storage)
+                  GenerateLabel(npc.HumanoidRootPart, "[NPC] " .. npc.Name, Color3.fromRGB(50, 255, 50), NpcESP_Storage)
                end
             end
          end
@@ -463,6 +463,6 @@ task.spawn(function()
                 Character.Humanoid.UseJumpPower = true
             end
         end)
-        task.wait(0.4)
+        task.wait(0.5)
     end
 end)
