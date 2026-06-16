@@ -1,9 +1,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "ahgrow v1.8 🌿 (AFK Night Edition)",
-   LoadingTitle = "ahgrow v1.8 Premium",
-   LoadingSubtitle = "Chúc bạn chơi game vui vẻ! 🎉", -- Thêm lời chúc khi loading script theo yêu cầu
+   Name = "ahgrow v2.0 🌿 (Smart Restock Edition)",
+   LoadingTitle = "ahgrow v2.0 Premium",
+   LoadingSubtitle = "Chúc bạn chơi game vui vẻ! 🎉",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
 })
@@ -13,20 +13,31 @@ _G.AutoHarvest = false
 _G.AutoSteal = false
 _G.AutoEventSeed = false
 _G.AutoBuySeeds = false
+_G.AutoExpandPlot = false
 _G.SuperLagReduction = false
-_G.AntiAFK = true -- Mặc định bật ngầm bảo vệ khi chạy
-_G.SelectedSeedToBuy = "Strawberry"
+_G.AntiAFK = true
 
-local SeedList = {"Strawberry", "Lúa mì", "Cà rốt", "Cà chua", "Dưa hấu", "Bắp"}
+-- Thiết lập cấu hình thứ tự ưu tiên mua cây (Mặc định xếp từ cao xuống thấp)
+_G.Priority1 = "Carrot"
+_G.Priority2 = "Strawberry"
+_G.Priority3 = "Blueberry"
 
--- Phân tách lại cấu trúc các Tab theo đúng yêu cầu của bạn
+-- Cập nhật toàn bộ danh sách hạt giống bằng tiếng Anh theo video 1000021082.mp4
+local SeedList = {
+    "Carrot", "Strawberry", "Blueberry", "Tulip", "Tomato", "Apple", "Bamboo", 
+    "Corn", "Cactus", "Pineapple", "Mushroom", "Green Bean", "Banana", "Grape", 
+    "Coconut", "Mango", "Dragon Fruit", "Acorn", "Cherry", "Sunflower", 
+    "Venus Fly Trap", "Pomegranate", "Poison Apple", "Moon Bloom", "Dragon's Breath"
+}
+
+-- Phân tách lại cấu trúc các Tab UI
 local MainTab = Window:CreateTab("Vườn Trồng", "leaf")
 local StealTab = Window:CreateTab("Trộm Đêm", "shield-alert")
 local ShopTab = Window:CreateTab("Cửa Hàng", "shopping-cart")
 local SystemTab = Window:CreateTab("Hệ Thống", "sliders")
 
 --- ===========================================================================
---- HÀM BỔ TRỢ DI CHUYỂN & CHUỖI XỬ LÝ NPC TỰ ĐỘNG
+--- HÀM BỔ TRỢ DI CHUYỂN & XỬ LÝ SỰ KIỆN SHOP
 --- ===========================================================================
 local function safeTeleport(targetCFrame)
     local player = game.Players.LocalPlayer
@@ -39,52 +50,10 @@ local function safeTeleport(targetCFrame)
     end
 end
 
--- Vòng lặp tự động bán đồ (Thay thế việc phải ấn nút Sell thủ công trên video 1000021081.mp4)
-local function autoSellWorkflow()
+-- Tự động tương tác và chọn mua cây theo danh sách thứ tự ưu tiên khi có Restock
+local function buySeedsByPriority()
     local player = game.Players.LocalPlayer
-    local npc = workspace:FindFirstChild("Merchant") or workspace:FindFirstChild("SellNPC") or workspace:FindFirstChild("NPC")
-    
-    if npc and npc:FindFirstChild("HumanoidRootPart") then
-        -- Lưu tạm trạng thái farm trước khi ngắt để bán
-        local oldHarvest = _G.AutoHarvest
-        local oldSteal = _G.AutoSteal
-        _G.AutoHarvest = false
-        _G.AutoSteal = false
-        
-        -- Dịch chuyển trực diện tới NPC
-        safeTeleport(npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2))
-        task.wait(0.3)
-        
-        -- Kích hoạt hội thoại
-        local prompt = npc:FindFirstChildOfClass("ProximityPrompt") or npc:GetComponentInChildren("ProximityPrompt")
-        if prompt then
-            fireproximityprompt(prompt)
-            task.wait(0.4)
-            
-            -- Chọn mục thoại #1: Bán hết tất cả trong kho đồ
-            local dialogGui = player.PlayerGui:FindFirstChild("DialogGui") or player.PlayerGui:FindFirstChild("TalkGui")
-            if dialogGui then
-                for _, option in pairs(dialogGui:GetDescendants()) do
-                    if option:IsA("TextButton") and (option.Text:match("1") or option.Name:match("Option1") or option.Name:match("1")) then
-                        for _, connection in pairs(getconnections(option.MouseButton1Click)) do
-                            connection:Fire()
-                        end
-                        break
-                    end
-                end
-            end
-        end
-        task.wait(0.3)
-        -- Khôi phục lại trạng thái nhặt trái sau khi bán sạch kho đồ thành công
-        _G.AutoHarvest = oldHarvest
-        _G.AutoSteal = oldSteal
-    end
-end
-
--- Hàm thực hiện tự động tương tác NPC mua hạt nhiều lần
-local function autoBuySeedsWorkflow()
-    local player = game.Players.LocalPlayer
-    local seedNPC = workspace:FindFirstChild("SeedMerchant") or workspace:FindFirstChild("SeedNPC") or workspace:FindFirstChild("NPC")
+    local seedNPC = workspace:FindFirstChild("SeedMerchant") or workspace:FindFirstChild("SeedNPC") or workspace:FindFirstChild("NPC") or workspace:FindFirstChild("Sam")
     
     if seedNPC and seedNPC:FindFirstChild("HumanoidRootPart") then
         safeTeleport(seedNPC.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2))
@@ -93,9 +62,60 @@ local function autoBuySeedsWorkflow()
         local prompt = seedNPC:FindFirstChildOfClass("ProximityPrompt") or seedNPC:GetComponentInChildren("ProximityPrompt")
         if prompt then
             fireproximityprompt(prompt)
+            task.wait(0.5)
+            
+            -- Kiểm tra giao diện bảng mua hàng (Seed Shop GUI) xuất hiện trên màn hình
+            local shopGui = player.PlayerGui:FindFirstChild("SeedShopGui") or player.PlayerGui:FindFirstChild("ShopGui") or player.PlayerGui:FindFirstChild("MerchantGui")
+            if shopGui and shopGui.Enabled then
+                
+                -- Tạo mảng chứa thứ tự ưu tiên người dùng đã thiết lập trên giao diện Rayfield
+                local priorityOrder = {_G.Priority1, _G.Priority2, _G.Priority3}
+                
+                -- Duyệt qua từng bậc ưu tiên từ 1 đến 3 để tìm mua
+                for _, currentTargetTree in ipairs(priorityOrder) do
+                    local bought = false
+                    for _, itemCard in pairs(shopGui:GetDescendants()) do
+                        -- Quét tìm thẻ sản phẩm có chứa tên loại cây tương ứng
+                        if itemCard:IsA("TextLabel") and itemCard.Text:lower():match(currentTargetTree:lower()) then
+                            -- Tìm nút Mua (Nút chứa giá tiền hoặc nút Buy/Common/Uncommon đính kèm trong khung)
+                            local buyButton = itemCard.Parent:FindFirstChildOfClass("TextButton") or itemCard.Parent:FindFirstChild("BuyButton")
+                            if buyButton then
+                                -- Thực hiện click mua từ xa qua kết nối phần cứng của game
+                                for _, connection in pairs(getconnections(buyButton.MouseButton1Click)) do
+                                    connection:Fire()
+                                    task.wait(0.1)
+                                end
+                                bought = true
+                                break
+                            end
+                        end
+                    end
+                    if bought then task.wait(0.2) end
+                end
+            end
+        end
+    end
+end
+
+-- Hệ thống Auto Sell hoàn toàn tự động khi đầy túi đồ
+local function autoSellWorkflow()
+    local player = game.Players.LocalPlayer
+    local npc = workspace:FindFirstChild("Merchant") or workspace:FindFirstChild("SellNPC") or workspace:FindFirstChild("NPC")
+    
+    if npc and npc:FindFirstChild("HumanoidRootPart") then
+        local oldHarvest = _G.AutoHarvest
+        local oldSteal = _G.AutoSteal
+        _G.AutoHarvest = false
+        _G.AutoSteal = false
+        
+        safeTeleport(npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2))
+        task.wait(0.3)
+        
+        local prompt = npc:FindFirstChildOfClass("ProximityPrompt") or npc:GetComponentInChildren("ProximityPrompt")
+        if prompt then
+            fireproximityprompt(prompt)
             task.wait(0.4)
             
-            -- Chọn mục nói chuyện số #1 để mở bảng chọn hoặc tiến hành mua trực tiếp
             local dialogGui = player.PlayerGui:FindFirstChild("DialogGui") or player.PlayerGui:FindFirstChild("TalkGui")
             if dialogGui then
                 for _, option in pairs(dialogGui:GetDescendants()) do
@@ -108,11 +128,14 @@ local function autoBuySeedsWorkflow()
                 end
             end
         end
+        task.wait(0.3)
+        _G.AutoHarvest = oldHarvest
+        _G.AutoSteal = oldSteal
     end
 end
 
 --- ===========================================================================
---- TAB 1: PHÂN VƯỜN TRỒNG & TỰ ĐỘNG MUA HẠT
+--- TAB 1: PHÂN VƯỜN TRỒNG & THIẾT LẬP THỨ TỰ ƯU TIÊN MUA HẠT
 --- ===========================================================================
 MainTab:CreateSection("Quản Lý Thu Hoạch & Gieo Hạt")
 
@@ -129,7 +152,6 @@ MainTab:CreateToggle({
                   local player = game.Players.LocalPlayer
                   local isFull = false
                   
-                  -- Kiểm tra lỗi đầy kho hiển thị trên GUI như video 1000021081.mp4
                   for _, gui in pairs(player.PlayerGui:GetDescendants()) do
                       if gui:IsA("TextLabel") and gui.Text:match("Inventory is full") and gui.Visible then
                           isFull = true
@@ -137,7 +159,6 @@ MainTab:CreateToggle({
                       end
                   end
                   
-                  -- Sửa lỗi trên video: Kho đầy -> Tự động dừng nhặt -> Tự động đi Sell -> Bán xong tự kích hoạt lại
                   if isFull then
                       autoSellWorkflow()
                   else
@@ -157,29 +178,98 @@ MainTab:CreateToggle({
    end,
 })
 
-MainTab:CreateSection("Cửa Hàng Hạt Giống Tại Vườn")
+MainTab:CreateSection("Cấu Hình Thứ Tự Ưu Tiên Khi Cửa Hàng Restock")
 
 MainTab:CreateDropdown({
-   Name = "Bảng Chọn Loại Hạt Muốn Mua",
+   Name = "Ưu Tiên Số 1 (Priority 1)",
+   Options = SeedList,
+   CurrentOption = {"Carrot"},
+   MultipleOptions = false,
+   Flag = "P1",
+   Callback = function(Option) _G.Priority1 = Option[1] end,
+})
+
+MainTab:CreateDropdown({
+   Name = "Ưu Tiên Số 2 (Priority 2)",
    Options = SeedList,
    CurrentOption = {"Strawberry"},
    MultipleOptions = false,
-   Flag = "DropdownBuySeed",
-   Callback = function(Option)
-      _G.SelectedSeedToBuy = Option[1]
-   end,
+   Flag = "P2",
+   Callback = function(Option) _G.Priority2 = Option[1] end,
+})
+
+MainTab:CreateDropdown({
+   Name = "Ưu Tiên Số 3 (Priority 3)",
+   Options = SeedList,
+   CurrentOption = {"Blueberry"},
+   MultipleOptions = false,
+   Flag = "P3",
+   Callback = function(Option) _G.Priority3 = Option[1] end,
 })
 
 MainTab:CreateToggle({
-   Name = "Tự Động Mua Hạt Giống Liên Tục",
+   Name = "Kích Hoạt Auto Buy Khi Gặp Restock",
    CurrentValue = false,
-   Flag = "ToggleBuySeeds",
+   Flag = "ToggleBuySeedsPriority",
    Callback = function(Value)
       _G.AutoBuySeeds = Value
       task.spawn(function()
+          local lastRestockTime = ""
           while _G.AutoBuySeeds do
-              autoBuySeedsWorkflow()
-              task.wait(2) -- Tần suất giãn cách giữa các lần mua lặp lại liên tục khi NPC bán
+              task.wait(1)
+              pcall(function()
+                  local player = game.Players.LocalPlayer
+                  -- Giám sát chuỗi ký tự đếm ngược thời gian Restock hiển thị trên giao diện bảng hiệu/UI cửa hàng
+                  local restockLabel = nil
+                  for _, v in pairs(player.PlayerGui:GetDescendants()) do
+                      if v:IsA("TextLabel") and (v.Text:match("Restock in") or v.Text:match("Reset in")) then
+                          restockLabel = v
+                          break
+                      end
+                  end
+                  
+                  if restockLabel then
+                      -- Phát hiện kho hàng vừa làm mới (Khi đồng hồ đếm ngược quay về mốc cao nhất hoặc thay đổi trạng thái)
+                      if restockLabel.Text ~= lastRestockTime and (restockLabel.Text:match("5m") or restockLabel.Text:match("4m 59s")) then
+                          lastRestockTime = restockLabel.Text
+                          Rayfield:Notify({Title = "Cửa Hàng", Content = "Phát hiện Restock! Tiến hành mua hạt theo thứ tự ưu tiên.", Duration = 3})
+                          buySeedsByPriority() -- Chạy hệ thống quét gom hàng tự động
+                      end
+                  else
+                      -- Nếu không tìm thấy nhãn đếm ngược UI, thực hiện mua tuần hoàn sau mỗi 15 giây để phòng hụt hàng
+                      buySeedsByPriority()
+                      task.wait(15)
+                  end
+              end)
+          end
+      end)
+   end,
+})
+
+MainTab:CreateSection("Bản Mở Rộng Đất (Grow A Garden 2)")
+
+MainTab:CreateToggle({
+   Name = "Tự Động Mở Rộng Ô Đất (Auto Expand Plot)",
+   CurrentValue = false,
+   Flag = "ToggleExpandPlot",
+   Callback = function(Value)
+      _G.AutoExpandPlot = Value
+      task.spawn(function()
+          while _G.AutoExpandPlot do
+              task.wait(3)
+              pcall(function()
+                  for _, obj in pairs(workspace:GetDescendants()) do
+                      if _G.AutoExpandPlot and obj:IsA("BasePart") and (obj.Name:match("Expand") or obj.Name:match("Plot") or obj.Name:match("Mở rộng")) then
+                          local prompt = obj:FindFirstChildOfClass("ProximityPrompt") or obj.Parent:FindFirstChildOfClass("ProximityPrompt")
+                          if prompt then
+                              local player = game.Players.LocalPlayer
+                              player.Character.HumanoidRootPart.CFrame = obj.CFrame * CFrame.new(0, 2, 0)
+                              task.wait(0.2)
+                              fireproximityprompt(prompt)
+                          end
+                      end
+                  end
+              end)
           end
       end)
    end,
@@ -270,20 +360,15 @@ ShopTab:CreateToggle({
 --- ===========================================================================
 SystemTab:CreateSection("Cấu Hình Treo Máy Xuyên Đêm")
 
--- Tính năng 1: Thiết lập Anti-AFK trong mục cài đặt bảo vệ hệ thống
 SystemTab:CreateToggle({
    Name = "Kích Hoạt Tính Năng Chống Treo Máy (Anti-AFK)",
    CurrentValue = true,
    Flag = "ToggleAntiAFK",
    Callback = function(Value)
       _G.AntiAFK = Value
-      if Value then
-          Rayfield:Notify({Title = "Hệ Thống", Content = "Anti-AFK đang bảo vệ ngầm.", Duration = 2})
-      end
-   end,
+   end
 })
 
--- Kích hoạt vòng lặp ảo mô phỏng tương tác phần cứng chặn đứng Roblox Kick
 local virtualUser = game:GetService("VirtualUser")
 game.Players.LocalPlayer.Idled:Connect(function()
    if _G.AntiAFK then
@@ -293,7 +378,6 @@ game.Players.LocalPlayer.Idled:Connect(function()
    end
 end)
 
--- Tính năng 2: Chế độ giảm lag đồ họa cực đoan để cày đêm mát máy
 SystemTab:CreateToggle({
    Name = "Chế Độ Siêu Giảm Lag Mạnh (Xóa Texture & Khóa 15 FPS)",
    CurrentValue = false,
@@ -315,16 +399,10 @@ SystemTab:CreateToggle({
                       v.Reflectance = 0
                   end
               end
-              
-              if setfpscap then
-                  setfpscap(15) -- Giới hạn 15 FPS giúp giải phóng CPU/GPU khi ngủ
-              end
+              if setfpscap then setfpscap(15) end
           end)
-          Rayfield:Notify({Title = "Hệ Thống", Content = "Đã bật cấu hình siêu mượt cày đêm!", Duration = 3})
       else
-          if setfpscap then
-              setfpscap(60)
-          end
+          if setfpscap then setfpscap(60) end
       end
    end,
 })
@@ -336,6 +414,7 @@ SystemTab:CreateButton({
       _G.AutoSteal = false
       _G.AutoEventSeed = false
       _G.AutoBuySeeds = false
+      _G.AutoExpandPlot = false
       _G.SuperLagReduction = false
       _G.AntiAFK = false
       if setfpscap then setfpscap(60) end
@@ -344,8 +423,8 @@ SystemTab:CreateButton({
 })
 
 Rayfield:Notify({
-   Title = "ahgrow v1.8 Hoàn Tất!",
-   Content = "Chúc bạn chơi game vui vẻ! Hệ thống đã chạy ngầm.",
+   Title = "ahgrow v2.0 Hoàn Tất!",
+   Content = "Hệ thống xếp hạng ưu tiên Restock đã hoạt động.",
    Duration = 5,
    Image = "check"
 })
