@@ -1,36 +1,20 @@
 -- =========================================================
--- GROW A GARDEN 2 - HARD FIX INJECTION (RAYFIELD INTERFACE)
--- SỬA LỖI 100% KHÔNG HIỆN GIAO DIỆN TRÊN MOBILE
+-- GROW A GARDEN 2 - ULTRA COMPATIBILITY CORE (KAVO UI)
+-- SỬA LỖI TUYỆT ĐỐI KHÔNG LÊN GIAO DIỆN TRÊN MOBILE
 -- =========================================================
 
--- Tải thư viện thông qua link phân phối tốc độ cao (Bypass chặn mạng)
-local success, Rayfield = pcall(function()
-    return loadstring(game:HttpGet('https://raw.githubusercontent.com/bannable-v2/Rayfield-Fix/main/Source.lua'))()
-    or loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source'))()
-end)
+-- Khởi tạo thư viện Kavo (Cực nhẹ, tương thích 100% với Delta/Hydrogen)
+local KavoUi = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+-- Chọn phong cách giao diện tối rực rỡ (Neon)
+local Window = KavoUi.CreateLib("🌱 Grow a Garden 2 - NeonHub", "Midnight")
 
-if not success or not Rayfield then
-    -- Phương án dự phòng cuối cùng nếu Github bị chặn hoàn toàn: Chuyển hướng Console
-    warn("👉 KHÔNG THỂ TẢI ĐƯỢC RAYFIELD. VUI LÒNG BẬT VPN 1.1.1.1 VÀ THỬ LẠI! 👈")
-    return
-end
-
--- KHỞI TẠO CỬA SỔ
-local Window = Rayfield:CreateWindow({
-    Name = "🌱 Grow a Garden 2 - NeonHub v2",
-    LoadingTitle = "Injecting Garden Engine...",
-    LoadingSubtitle = "Anti-Crash & Anti-Boot Error",
-    ConfigurationSaving = { Enabled = false },
-    KeySystem = false
-})
-
--- SERVICES
+-- SERVICES & PLAYERS
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- SETTINGS
+-- CONFIG STATES
 local Settings = {
     AutoPlant = false,
     AutoWater = false,
@@ -41,7 +25,7 @@ local Settings = {
     WalkSpeed = 16
 }
 
--- HÀM DÒ TÌM REMOTES
+-- HÀM DÒ TÌM REMOTE EVENT CHỐNG UPDATE GAME
 local function GetGardenEvent(name)
     for _, child in pairs(ReplicatedStorage:GetDescendants()) do
         if child:IsA("RemoteEvent") and (child.Name:lower():find(name:lower())) then
@@ -52,34 +36,27 @@ local function GetGardenEvent(name)
 end
 
 ---------------------------------------------------------
--- TAB 1: AUTO FARM
+-- CẤU TRÚC PHÂN CHIA TABS TRÊN KAVO UI
 ---------------------------------------------------------
-local FarmTab = Window:CreateTab("Auto Farm", 4483345998)
+local FarmTab = Window:NewTab("Auto Farm")
+local FarmSection = FarmTab:NewSection("Trồng Trọt & Chăm Sóc")
 
-FarmTab:CreateToggle({
-    Name = "🌱 Auto Plant Seeds (Tự Động Gieo Hạt)",
-    CurrentValue = false,
-    Callback = function(Value) Settings.AutoPlant = Value end,
-})
+FarmSection:NewToggle("🌱 Auto Plant Seeds (Tự Gieo Hạt)", "Tự động trồng hạt giống đã chọn", function(Value)
+    Settings.AutoPlant = Value
+end)
 
-FarmTab:CreateToggle({
-    Name = "💧 Auto Water Plants (Tự Động Tưới Nước)",
-    CurrentValue = false,
-    Callback = function(Value) Settings.AutoWater = Value end,
-})
+FarmSection:NewToggle("💧 Auto Water Plants (Tự Tưới Nước)", "Tự động giữ độ ẩm cho đất", function(Value)
+    Settings.AutoWater = Value
+end)
 
-FarmTab:CreateToggle({
-    Name = "✂️ Auto Harvest (Tự Động Thu Hoạch)",
-    CurrentValue = false,
-    Callback = function(Value) Settings.AutoHarvest = Value end,
-})
+FarmSection:NewToggle("✂️ Auto Harvest (Tự Thu Hoạch)", "Tự động hái nông sản khi chín", function(Value)
+    Settings.AutoHarvest = Value
+end)
 
--- Vòng lặp nông trại tuần tự bảo vệ CPU
+-- Vòng lặp nông trại chạy ngầm an toàn
 task.spawn(function()
     while true do
-        if not (Settings.AutoPlant or Settings.AutoWater or Settings.AutoHarvest) then 
-            task.wait(1) 
-        else
+        if Settings.AutoPlant or Settings.AutoWater or Settings.AutoHarvest then
             pcall(function()
                 if Settings.AutoPlant then
                     local ev = GetGardenEvent("plant") or GetGardenEvent("seed")
@@ -97,35 +74,31 @@ task.spawn(function()
                 end
             end)
             task.wait(0.2)
+        else
+            task.wait(0.5)
         end
     end
 end)
 
 ---------------------------------------------------------
--- TAB 2: SHOP & ECONOMY
+-- TAB ĐỔI MỒI / HẠT GIỐNG & KINH TẾ
 ---------------------------------------------------------
-local ShopTab = Window:CreateTab("Shop & Sell", 4483345998)
+local ShopTab = Window:NewTab("Shop & Sell")
+local ShopSection = ShopTab:NewSection("Cửa Hàng Nông Sản")
 
-ShopTab:CreateDropdown({
-    Name = "Select Seed Type",
-    Options = {"Tomato", "Carrot", "Potato", "Pumpkin", "Strawberry", "Watermelon"},
-    CurrentOption = {"Tomato"},
-    MultipleOptions = false,
-    Callback = function(Option) Settings.SelectedSeed = Option[1] end,
-})
+ShopSection:NewDropdown("Select Seed Type", "Chọn loại hạt để trồng và mua", {"Tomato", "Carrot", "Potato", "Pumpkin", "Strawberry", "Watermelon"}, function(Option)
+    Settings.SelectedSeed = Option
+end)
 
-ShopTab:CreateToggle({
-    Name = "🛒 Auto Buy Selected Seed",
-    CurrentValue = false,
-    Callback = function(Value) Settings.AutoBuySeeds = Value end,
-})
+ShopSection:NewToggle("🛒 Auto Buy Selected Seed", "Tự động mua thêm hạt giống khi trồng", function(Value)
+    Settings.AutoBuySeeds = Value
+end)
 
-ShopTab:CreateToggle({
-    Name = "💰 Auto Sell Crops (Tự Động Bán)",
-    CurrentValue = false,
-    Callback = function(Value) Settings.AutoSell = Value end,
-})
+ShopSection:NewToggle("💰 Auto Sell Crops (Tự Động Bán)", "Tự động bán sạch sản vật kiếm tiền", function(Value)
+    Settings.AutoSell = Value
+end)
 
+-- Vòng lặp quản lý tiền tệ và kho bãi
 task.spawn(function()
     while true do
         if Settings.AutoBuySeeds or Settings.AutoSell then
@@ -148,29 +121,32 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- TAB 3: UTILITIES
+-- TAB TIỆN ÍCH UTILITIES
 ---------------------------------------------------------
-local UtilTab = Window:CreateTab("Utilities", 4483345998)
+local UtilTab = Window:NewTab("Utilities")
+local UtilSection = UtilTab:NewSection("Hỗ Trợ Nhân Vật")
 
-UtilTab:CreateSlider({
-    Name = "WalkSpeed Modifier",
-    Min = 16, Max = 120, CurrentValue = 16,
-    Callback = function(Value)
-        Settings.WalkSpeed = Value
-        pcall(function()
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid.WalkSpeed = Value
-            end
-        end)
-    end,
-})
+UtilSection:NewSlider("WalkSpeed Modifier", "Thay đổi tốc độ chạy của bạn", 120, 16, function(Value)
+    Settings.WalkSpeed = Value
+    pcall(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = Value
+        end
+    end)
+end)
 
-UtilTab:CreateButton({
-    Name = "Fullbright (Sáng Rực Bản Đồ)",
-    Callback = function()
-        pcall(function()
-            game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
-            game:GetService("Lighting").Brightness = 2
-        end)
-    end,
-})
+UtilSection:NewButton("Fullbright (Sáng Rực Bản Đồ)", "Xóa tan màn đêm trong game", function()
+    pcall(function()
+        local Lighting = game:GetService("Lighting")
+        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 14
+    end)
+end)
+
+-- Tự động áp dụng lại tốc độ chạy sau khi nhân vật hồi sinh
+LocalPlayer.CharacterAdded:Connect(function(Char)
+    local Hum = Char:WaitForChild("Humanoid")
+    task.wait(0.5)
+    Hum.WalkSpeed = Settings.WalkSpeed
+end)
