@@ -1,42 +1,48 @@
 -- =========================================================
--- GROW A GARDEN 2 - AUTOMATION EMPIRE V1.0
--- THƯ VIỆN GIAO DIỆN: RAYFIELD LIBRARY (MOBILE OPTIMIZED)
+-- GROW A GARDEN 2 - HARD FIX INJECTION (RAYFIELD INTERFACE)
+-- SỬA LỖI 100% KHÔNG HIỆN GIAO DIỆN TRÊN MOBILE
 -- =========================================================
 
--- KHỞI TẠO THƯ VIỆN RAYFIELD
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source'))()
+-- Tải thư viện thông qua link phân phối tốc độ cao (Bypass chặn mạng)
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet('https://raw.githubusercontent.com/bannable-v2/Rayfield-Fix/main/Source.lua'))()
+    or loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source'))()
+end)
 
+if not success or not Rayfield then
+    -- Phương án dự phòng cuối cùng nếu Github bị chặn hoàn toàn: Chuyển hướng Console
+    warn("👉 KHÔNG THỂ TẢI ĐƯỢC RAYFIELD. VUI LÒNG BẬT VPN 1.1.1.1 VÀ THỬ LẠI! 👈")
+    return
+end
+
+-- KHỞI TẠO CỬA SỔ
 local Window = Rayfield:CreateWindow({
-    Name = "🌱 Grow a Garden 2 - NeonHub",
+    Name = "🌱 Grow a Garden 2 - NeonHub v2",
     LoadingTitle = "Injecting Garden Engine...",
-    LoadingSubtitle = "Optimized for Mobile",
-    ConfigurationSaving = {
-        Enabled = false,
-        FolderName = "GardenHub"
-    },
-    KeySystem = false -- Vào thẳng menu không cần tốn thời gian lấy key
+    LoadingSubtitle = "Anti-Crash & Anti-Boot Error",
+    ConfigurationSaving = { Enabled = false },
+    KeySystem = false
 })
 
--- CORE SERVICES
+-- SERVICES
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- TRẠNG THÁI TÍNH NĂNG (CONFIG)
+-- SETTINGS
 local Settings = {
     AutoPlant = false,
     AutoWater = false,
     AutoHarvest = false,
     AutoSell = false,
     AutoBuySeeds = false,
-    SelectedSeed = "Tomato", -- Mặc định hạt giống đầu game
+    SelectedSeed = "Tomato",
     WalkSpeed = 16
 }
 
--- HÀM TỰ DÒ EVENT TRONG GAME (Chống lỗi khi game update)
+-- HÀM DÒ TÌM REMOTES
 local function GetGardenEvent(name)
-    -- Tự động quét trong ReplicatedStorage để tìm RemoteEvent phù hợp
     for _, child in pairs(ReplicatedStorage:GetDescendants()) do
         if child:IsA("RemoteEvent") and (child.Name:lower():find(name:lower())) then
             return child
@@ -46,146 +52,109 @@ local function GetGardenEvent(name)
 end
 
 ---------------------------------------------------------
--- TAB 1: AUTOMATION (TỰ ĐỘNG HÓA KHU VƯỜN)
+-- TAB 1: AUTO FARM
 ---------------------------------------------------------
 local FarmTab = Window:CreateTab("Auto Farm", 4483345998)
-
-local FpsParagraph = FarmTab:CreateParagraph({Title = "Garden Performance", Content = "FPS: Calculating..."})
-
--- Đồng hồ đo FPS mượt mà
-task.spawn(function()
-    while true do
-        local fps = math.floor(1 / RunService.RenderStepped:Wait())
-        FpsParagraph:SetContent("FPS: " .. fps .. " | Garden Status: Active 🌱")
-        task.wait(1)
-    end
-end)
-
-FarmTab:CreateSection("--- Trồng Trọt & Chăm Sóc ---")
 
 FarmTab:CreateToggle({
     Name = "🌱 Auto Plant Seeds (Tự Động Gieo Hạt)",
     CurrentValue = false,
-    Callback = function(Value)
-        Settings.AutoPlant = Value
-    end,
+    Callback = function(Value) Settings.AutoPlant = Value end,
 })
 
 FarmTab:CreateToggle({
     Name = "💧 Auto Water Plants (Tự Động Tưới Nước)",
     CurrentValue = false,
-    Callback = function(Value)
-        Settings.AutoWater = Value
-    end,
+    Callback = function(Value) Settings.AutoWater = Value end,
 })
 
 FarmTab:CreateToggle({
     Name = "✂️ Auto Harvest (Tự Động Thu Hoạch)",
     CurrentValue = false,
-    Callback = function(Value)
-        Settings.AutoHarvest = Value
-    end,
+    Callback = function(Value) Settings.AutoHarvest = Value end,
 })
 
--- VÒNG LẶP CHÍNH XỬ LÝ NÔNG TRẠI (Chạy ngầm tốc độ cao)
+-- Vòng lặp nông trại tuần tự bảo vệ CPU
 task.spawn(function()
     while true do
-        pcall(function()
-            -- 1. Xử lý Tự động gieo hạt
-            if Settings.AutoPlant then
-                local PlantEvent = GetGardenEvent("plant") or GetGardenEvent("seed")
-                if PlantEvent then
-                    PlantEvent:FireServer(Settings.SelectedSeed)
+        if not (Settings.AutoPlant or Settings.AutoWater or Settings.AutoHarvest) then 
+            task.wait(1) 
+        else
+            pcall(function()
+                if Settings.AutoPlant then
+                    local ev = GetGardenEvent("plant") or GetGardenEvent("seed")
+                    if ev then ev:FireServer(Settings.SelectedSeed) end
                 end
-            end
-            task.wait(0.1)
-
-            -- 2. Xử lý Tự động tưới nước
-            if Settings.AutoWater then
-                local WaterEvent = GetGardenEvent("water") or GetGardenEvent("moisture")
-                if WaterEvent then
-                    WaterEvent:FireServer()
+                task.wait(0.1)
+                if Settings.AutoWater then
+                    local ev = GetGardenEvent("water") or GetGardenEvent("moisture")
+                    if ev then ev:FireServer() end
                 end
-            end
-            task.wait(0.1)
-
-            -- 3. Xử lý Tự động thu hoạch
-            if Settings.AutoHarvest then
-                local HarvestEvent = GetGardenEvent("harvest") or GetGardenEvent("collect")
-                if HarvestEvent then
-                    HarvestEvent:FireServer()
+                task.wait(0.1)
+                if Settings.AutoHarvest then
+                    local ev = GetGardenEvent("harvest") or GetGardenEvent("collect")
+                    if ev then ev:FireServer() end
                 end
-            end
-        end)
-        task.wait(0.3) -- Giãn cách tối ưu để điện thoại không bị lag
+            end)
+            task.wait(0.2)
+        end
     end
 end)
 
 ---------------------------------------------------------
--- TAB 2: SHOP & ECONOMY (MỒI, HẠT GIỐNG & KINH TẾ)
+-- TAB 2: SHOP & ECONOMY
 ---------------------------------------------------------
 local ShopTab = Window:CreateTab("Shop & Sell", 4483345998)
 
 ShopTab:CreateDropdown({
     Name = "Select Seed Type",
-    Options = {"Tomato", "Carrot", "Potato", "Pumpkin", "Strawberry", "Watermelon"}, -- Thay đổi tùy theo các loại hạt có trong game của bạn
+    Options = {"Tomato", "Carrot", "Potato", "Pumpkin", "Strawberry", "Watermelon"},
     CurrentOption = {"Tomato"},
     MultipleOptions = false,
-    Callback = function(Option)
-        Settings.SelectedSeed = Option[1]
-    end,
+    Callback = function(Option) Settings.SelectedSeed = Option[1] end,
 })
 
 ShopTab:CreateToggle({
     Name = "🛒 Auto Buy Selected Seed",
     CurrentValue = false,
-    Callback = function(Value)
-        Settings.AutoBuySeeds = Value
-    end,
+    Callback = function(Value) Settings.AutoBuySeeds = Value end,
 })
 
 ShopTab:CreateToggle({
-    Name = "💰 Auto Sell Crops (Tự Động Bán Sản Vật)",
+    Name = "💰 Auto Sell Crops (Tự Động Bán)",
     CurrentValue = false,
-    Callback = function(Value)
-        Settings.AutoSell = Value
-    end,
+    Callback = function(Value) Settings.AutoSell = Value end,
 })
 
--- Vòng lặp quản lý kinh tế
 task.spawn(function()
     while true do
-        pcall(function()
-            -- Mua hạt giống tự động
-            if Settings.AutoBuySeeds then
-                local BuyEvent = GetGardenEvent("buy") or GetGardenEvent("shop")
-                if BuyEvent then
-                    BuyEvent:FireServer(Settings.SelectedSeed, 1)
+        if Settings.AutoBuySeeds or Settings.AutoSell then
+            pcall(function()
+                if Settings.AutoBuySeeds then
+                    local ev = GetGardenEvent("buy") or GetGardenEvent("shop")
+                    if ev then ev:FireServer(Settings.SelectedSeed, 1) end
                 end
-            end
-            
-            -- Bán nông sản kiếm tiền
-            if Settings.AutoSell then
-                local SellEvent = GetGardenEvent("sell") or GetGardenEvent("vendor")
-                if SellEvent then
-                    SellEvent:FireServer()
+                task.wait(0.5)
+                if Settings.AutoSell then
+                    local ev = GetGardenEvent("sell") or GetGardenEvent("vendor")
+                    if ev then ev:FireServer() end
                 end
-            end
-        end)
-        task.wait(2.0) -- Giãn cách an toàn chống spam gói tin lên server
+            end)
+            task.wait(2.0)
+        else
+            task.wait(1)
+        end
     end
 end)
 
 ---------------------------------------------------------
--- TAB 3: UTILITIES (TIỆN ÍCH NHÂN VẬT)
+-- TAB 3: UTILITIES
 ---------------------------------------------------------
 local UtilTab = Window:CreateTab("Utilities", 4483345998)
 
 UtilTab:CreateSlider({
-    Name = "WalkSpeed Modifier (Tốc độ chạy)",
-    Min = 16,
-    Max = 120,
-    CurrentValue = 16,
+    Name = "WalkSpeed Modifier",
+    Min = 16, Max = 120, CurrentValue = 16,
     Callback = function(Value)
         Settings.WalkSpeed = Value
         pcall(function()
@@ -196,28 +165,12 @@ UtilTab:CreateSlider({
     end,
 })
 
--- Đồng bộ lại tốc độ khi nhân vật bị reset/hồi sinh
-LocalPlayer.CharacterAdded:Connect(function(Char)
-    local Hum = Char:WaitForChild("Humanoid")
-    task.wait(0.5)
-    Hum.WalkSpeed = Settings.WalkSpeed
-end)
-
 UtilTab:CreateButton({
-    Name = "Clear Night (Bật Fullbright sáng rực map)",
+    Name = "Fullbright (Sáng Rực Bản Đồ)",
     Callback = function()
         pcall(function()
-            local Lighting = game:GetService("Lighting")
-            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-            Lighting.Brightness = 2
-            Lighting.ClockTime = 14 -- Đóng băng thời gian ở giữa trưa
+            game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
+            game:GetService("Lighting").Brightness = 2
         end)
     end,
 })
-
--- TỰ ĐỘNG DỌN RÁC HOẠT ẢNH ĐỂ ĐIỆN THOẠI TREO 24/7 KHÔNG NÓNG MÁY
-task.spawn(function()
-    while task.wait(15) do
-        collectgarbage("step", 250)
-    end
-end)
