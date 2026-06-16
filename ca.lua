@@ -3,14 +3,14 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "ahgrow v1 🌿",
    LoadingTitle = "ahgrow v1 Premium",
-   LoadingSubtitle = "Bản Vá Lỗi Di Chuyển Thực Tế",
+   LoadingSubtitle = "Đã Vá Lỗi Theo Video Thực Tế",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
 })
 
 _G.AutoHarvest = false
 _G.AutoSteal = false
-_G.AutoSellAll = false
+_G.AutoSellFull = false
 _G.TargetPlayer = ""
 _G.FlingLoop = false
 _G.SelectedPlant = "Strawberry"
@@ -23,15 +23,24 @@ local TrollTab = Window:CreateTab("Phá Hoại", "zap")
 local ShopTab = Window:CreateTab("Cửa Hàng", "shopping-cart")
 local SystemTab = Window:CreateTab("Hệ Thống", "sliders")
 
-local function safeTeleport(targetCFrame)
-    local player = game.Players.LocalPlayer
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        local tweenService = game:GetService("TweenService")
-        local info = TweenInfo.new(0.5, Enum.EasingStyle.Linear)
-        local tween = tweenService:Create(player.Character.HumanoidRootPart, info, {CFrame = targetCFrame})
-        tween:Play()
-        tween.Completed:Wait()
-    end
+local function clickSellButton()
+    pcall(function()
+        local playerGui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+        if playerGui then
+            for _, gui in pairs(playerGui:GetDescendants()) do
+                if gui:IsA("TextButton") and (gui.Text:lower():match("sell") or gui.Name:lower():match("sell")) then
+                    if gui.Visible then
+                        for _, connection in pairs(getconnections(gui.MouseButton1Click)) do
+                            connection:Fire()
+                        end
+                        for _, connection in pairs(getconnections(gui.MouseButton1Down)) do
+                            connection:Fire()
+                        end
+                    end
+                end
+            end
+        end
+    end)
 end
 
 MainTab:CreateSection("Quản Lý Thu Hoạch & Gieo Hạt")
@@ -44,14 +53,17 @@ MainTab:CreateToggle({
       _G.AutoHarvest = Value
       task.spawn(function()
           while _G.AutoHarvest do
-              task.wait(0.5)
+              task.wait(0.3)
               pcall(function()
                   for _, v in pairs(workspace:GetDescendants()) do
                       if v:IsA("ProximityPrompt") and (v.ActionText:match("Harvest") or v.ActionText:match("Thu hoạch") or v.ActionText:match("Pick")) then
                           if v.Parent and v.Parent:IsA("BasePart") then
-                              safeTeleport(v.Parent.CFrame * CFrame.new(0, 2, 0))
-                              task.wait(0.1)
-                              fireproximityprompt(v)
+                              local player = game.Players.LocalPlayer
+                              if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                                  player.Character.HumanoidRootPart.CFrame = v.Parent.CFrame * CFrame.new(0, 1, 0)
+                                  task.wait(0.1)
+                                  fireproximityprompt(v)
+                              end
                           end
                       end
                   end
@@ -82,16 +94,19 @@ StealTab:CreateToggle({
       _G.AutoSteal = Value
       task.spawn(function()
           while _G.AutoSteal do
-              task.wait(0.5)
+              task.wait(0.4)
               pcall(function()
                   local clockTime = game.Lighting.ClockTime
                   if clockTime >= 18 or clockTime <= 5 then
                       for _, v in pairs(workspace:GetDescendants()) do
                           if v:IsA("ProximityPrompt") and (v.ActionText:match("Steal") or v.ActionText:match("Trộm")) then
                               if v.Parent and v.Parent:IsA("BasePart") then
-                                  safeTeleport(v.Parent.CFrame * CFrame.new(0, 2, 0))
-                                  task.wait(0.1)
-                                  fireproximityprompt(v)
+                                  local player = game.Players.LocalPlayer
+                                  if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                                      player.Character.HumanoidRootPart.CFrame = v.Parent.CFrame * CFrame.new(0, 1, 0)
+                                      task.wait(0.1)
+                                      fireproximityprompt(v)
+                                  end
                               end
                           end
                       end
@@ -151,18 +166,32 @@ TrollTab:CreateToggle({
 ShopTab:CreateSection("Quản Lý Giao Thương")
 
 ShopTab:CreateToggle({
-   Name = "Tự Động Bán Khi Đầy Kho (Auto Sell All)",
+   Name = "Tự Động Bán Khi Đầy Kho (Auto Sell)",
    CurrentValue = false,
    Flag = "ToggleSellAll",
    Callback = function(Value)
-      _G.AutoSellAll = Value
+      _G.AutoSellFull = Value
       task.spawn(function()
-          while _G.AutoSellAll do
-              task.wait(1)
+          while _G.AutoSellFull do
+              task.wait(0.5)
               pcall(function()
-                  local sellZone = workspace:FindFirstChild("SellZone") or workspace:FindFirstChild("SellPart") or workspace:FindFirstChild("Sell")
-                  if sellZone and sellZone:IsA("BasePart") then
-                      safeTeleport(sellZone.CFrame * CFrame.new(0, 2, 0))
+                  local localPlayer = game.Players.LocalPlayer
+                  local inventoryText = ""
+                  
+                  for _, v in pairs(localPlayer.PlayerGui:GetDescendants()) do
+                      if v:IsA("TextLabel") and v.Text:match("Inventory is full") then
+                          inventoryText = v.Text
+                          break
+                      end
+                  end
+                  
+                  if inventoryText ~= "" or localPlayer.Character: someMethod() then
+                      clickSellButton()
+                  else
+                      local label = localPlayer.PlayerGui:FindFirstChild("Inventory", true)
+                      if label and label:IsA("TextLabel") and label.Text:match("%[%s*%d+%s*/%s*%d+%s*%]") then
+                          clickSellButton()
+                      end
                   end
               end)
           end
@@ -196,7 +225,7 @@ SystemTab:CreateButton({
       _G.AutoHarvest = false
       _G.AutoSteal = false
       _G.FlingLoop = false
-      _G.AutoSellAll = false
+      _G.AutoSellFull = false
       Rayfield:Destroy()
    end,
 })
