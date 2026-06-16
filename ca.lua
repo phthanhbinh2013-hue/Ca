@@ -1,9 +1,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "🐟 NeonFish Ultimate Mobile V6",
-   LoadingTitle = "Optimizing Mobile Garbage Collector...",
-   LoadingSubtitle = "Secure Mobile Framework Active",
+   Name = "🐟 NeonFish Ultimate Mobile V6 (Pure Performance)",
+   LoadingTitle = "Bypassing Render Overhead...",
+   LoadingSubtitle = "High Efficiency Mobile Mode Active",
    ConfigurationSaving = { Enabled = false },
    Discord = { Enabled = false },
    KeySystem = false
@@ -25,6 +25,8 @@ local AutoEquip = false
 local AutoCast = false
 local AutoShake = false
 local MultiCast = false
+local AutoBuyBait = false
+local SelectedBaitName = "Basic Bait"
 local FishingSpeedMode = "Instant" 
 
 -- ESP MEMORY ARRAYS
@@ -32,49 +34,18 @@ local PlayerESP_Storage = {}
 local IslandESP_Storage = {}
 local NpcESP_Storage = {}
 
-------------------------------------------------------------------------
--- 🛡️ ADVANCED MOBILE ANTI-BAN & MEMORY SPOOFER (FIXED & SECURED)
-------------------------------------------------------------------------
-local RawMetatable = getrawmetatable(game)
-local OldIndex = RawMetatable.__index
-setreadonly(RawMetatable, false)
-
-RawMetatable.__index = newcclosure(function(self, key)
-    if not checkcaller() and self:IsA("Humanoid") then
-        if key == "WalkSpeed" then return 16 end
-        if key == "JumpPower" then return 50 end
-    end
-    return OldIndex(self, key)
-end)
-setreadonly(RawMetatable, true)
-
--- Admin Detect Watchdog (Security Event)
-RunService.Heartbeat:Connect(function()
-    pcall(function()
-        for _, player in pairs(Players:GetPlayers()) do
-            if player:IsInGroup(game.CreatorId) or (player.AccountAge < 1 and player ~= LocalPlayer) then
-                Rayfield:Notify({
-                    Name = "⚠️ ANTI-STAFF PROTECTION",
-                    Content = "Staff or Alt detected: " .. player.Name .. ". Play safely!",
-                    Duration = 3,
-                    Image = "shield-alert"
-                })
-            end
-        end
-    end)
-end)
-
--- MOBILE PERFORMANCE OPTIMIZER (Garbage Collection & Memory Cleaner)
+-- MOBILE GARBAGE CLEANER (CPU STABILITY ENGINE)
 task.spawn(function()
-    while task.wait(10) do
-        -- Periodically forces unused memory release to prevent mobile client crashes
-        setfpscap(60)
-        collectgarbage("collect")
+    while task.wait(5) do
+        pcall(function()
+            setfpscap(60)
+            collectgarbage("step", 100)
+        end)
     end
 end)
 
 ------------------------------------------------------------------------
--- TAB 1: PERFECT FISHING ENGINE (DUAL METHOD MOBILE EXCLUSIVE)
+-- TAB 1: ULTIMATE FISHING ENGINE (MAX SPEED & RELIABILITY)
 ------------------------------------------------------------------------
 local MainTab = Window:CreateTab("Neon Fishing", "fish")
 
@@ -98,14 +69,14 @@ MainTab:CreateToggle({
                   end
                end
             end
-            task.wait(0.6)
+            task.wait(0.3)
          end
       end)
    end
 })
 
 MainTab:CreateToggle({
-   Name = "Auto Perfect Cast (8s Recast Delay)",
+   Name = "Auto Perfect Cast (Instant Release)",
    CurrentValue = false,
    Flag = "ToggleCast",
    Callback = function(Value)
@@ -122,11 +93,11 @@ MainTab:CreateToggle({
                   local loopCount = MultiCast and 3 or 1
                   for i = 1, loopCount do
                      CastEvent:FireServer(100, true)
-                     if MultiCast then task.wait(0.08) end
+                     if MultiCast then task.wait(0.05) end
                   end
                end
             end
-            task.wait(8.0)
+            task.wait(7.5) -- Optimized recast timing
          end
       end)
    end
@@ -142,7 +113,7 @@ MainTab:CreateToggle({
 })
 
 MainTab:CreateToggle({
-   Name = "Auto Shake UI (Anti-Stuck Clicker)",
+   Name = "Auto Shake UI (Frame-Skip Clicker)",
    CurrentValue = false,
    Flag = "ToggleShake",
    Callback = function(Value)
@@ -162,7 +133,7 @@ MainTab:CreateToggle({
                   end
                end
             end)
-            task.wait(0.03 + math.random(0, 15) / 1000) -- Safe random interval for mobile CPU stability
+            task.wait(0.01)
          end
       end)
    end
@@ -178,7 +149,7 @@ MainTab:CreateDropdown({
    end,
 })
 
--- MOBILE HIGH-PRECISION DUAL-MODE REEL LOOPER
+-- HIGH-SPEED REEL CONTROLLER (DIRECT HEARTBEAT ATTACHMENT)
 RunService.Heartbeat:Connect(function()
     pcall(function()
         local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -191,15 +162,12 @@ RunService.Heartbeat:Connect(function()
                local ReelFinishEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("reelfinish")
                
                if FishingSpeedMode == "Instant" then
-                  -- Mode 1: Instant Server Teleportation Catch
                   if ReelFinishEvent then
                      ReelFinishEvent:FireServer(100, true)
                   end
                elseif FishingSpeedMode == "Legit Perfect Center" and FishTarget then
-                  -- Mode 2: Perfect Mathematical Center Tracking (Zero Failures)
-                  -- Keeps the fish precisely centered inside the player's catch bar
-                  Bar.Position = UDim2.new(FishTarget.Position.X.Scale, 0, FishTarget.Position.Y.Scale, 0)
-                  
+                  -- Locked Center Algorithm: Zero deviation frame-by-frame tracking
+                  Bar.Position = FishTarget.Position
                   if ReelFinishEvent then
                      ReelFinishEvent:FireServer(100, false)
                   end
@@ -209,10 +177,10 @@ RunService.Heartbeat:Connect(function()
     end)
 end)
 
--- ABSOLUTE STUCK FIX CLEANER ENGINE
+-- AUTO STUCK CLEANER
 task.spawn(function()
    while true do
-      task.wait(4)
+      task.wait(3)
       pcall(function()
          local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
          if PlayerGui:FindFirstChild("Reel") and not Character:FindFirstChildOfClass("Tool") then
@@ -225,7 +193,45 @@ task.spawn(function()
 end)
 
 ------------------------------------------------------------------------
--- TAB 2: SEPARATED ADVANCED VISUAL REPLICATOR (MOBILE OPTIMIZED ESP)
+-- TAB 2: AUTO SUPPLY & SHOP MODS
+------------------------------------------------------------------------
+local ShopTab = Window:CreateTab("Auto Shop", "shopping-cart")
+
+local BaitList = {"Basic Bait", "Worm Bait", "Shrimp Bait", "Minnow Bait", "Squid Bait"}
+
+ShopTab:CreateDropdown({
+   Name = "Select Bait Type To Buy",
+   Options = BaitList,
+   CurrentOption = {"Basic Bait"},
+   MultipleOptions = false,
+   Callback = function(Options)
+      SelectedBaitName = Options[1]
+   end,
+})
+
+ShopTab:CreateToggle({
+   Name = "Auto Buy Selected Bait (When Out)",
+   CurrentValue = false,
+   Flag = "ToggleBuyBait",
+   Callback = function(Value)
+      AutoBuyBait = Value
+      task.spawn(function()
+         while AutoBuyBait do
+            if not AutoBuyBait then break end
+            pcall(function()
+               local BaitEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("buybait")
+               if BaitEvent then
+                  BaitEvent:FireServer(SelectedBaitName, 1)
+               end
+            end)
+            task.wait(2.5) -- Safe interval to prevent network congestion
+         end
+      end)
+   end
+})
+
+------------------------------------------------------------------------
+-- TAB 3: SEPARATED ADVANCED VISUAL REPLICATOR (LIGHTWEIGHT)
 ------------------------------------------------------------------------
 local VisualsTab = Window:CreateTab("Visual Monitors", "eye")
 
@@ -233,7 +239,7 @@ local function GenerateLabel(target, name, color, storage)
    if storage[target] then return end
    
    local Billboard = Instance.new("BillboardGui")
-   Billboard.Size = UDim2.new(0, 180, 0, 45) -- Scaled down down for mobile layouts
+   Billboard.Size = UDim2.new(0, 160, 0, 40)
    Billboard.AlwaysOnTop = true
    Billboard.Adornee = target
    
@@ -241,8 +247,8 @@ local function GenerateLabel(target, name, color, storage)
    Label.Size = UDim2.new(1, 0, 1, 0)
    Label.BackgroundTransparency = 1
    Label.TextColor3 = color
-   Label.TextStrokeTransparency = 0.3
-   Label.TextSize = 11 -- Optimized text scaling
+   Label.TextStrokeTransparency = 0.4
+   Label.TextSize = 11
    Label.Font = Enum.Font.SourceSansBold
    Label.Text = name
    Label.Parent = Billboard
@@ -258,7 +264,7 @@ VisualsTab:CreateToggle({
    Callback = function(Value)
       if Value then
          task.spawn(function()
-            while task.wait(3) do -- Increased wait step to reduce CPU latency on mobile
+            while task.wait(4) do -- Optimized long delay step for mobile CPU cooling
                if not Value then break end
                for _, p in pairs(Players:GetPlayers()) do
                   if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
@@ -322,7 +328,7 @@ VisualsTab:CreateToggle({
 })
 
 ------------------------------------------------------------------------
--- TAB 3: ISLAND TELEPORT INTERFACE
+-- TAB 4: ISLAND TELEPORT INTERFACE
 ------------------------------------------------------------------------
 local TeleportTab = Window:CreateTab("Island Map TP", "map-pin")
 
@@ -357,7 +363,7 @@ TeleportTab:CreateButton({
 })
 
 ------------------------------------------------------------------------
--- TAB 4: ACTIVE SERVERS USER WARP
+-- TAB 5: ACTIVE SERVERS USER WARP
 ------------------------------------------------------------------------
 local PlayerTab = Window:CreateTab("Target User TP", "users")
 local SelectedPlayerName = ""
@@ -396,7 +402,7 @@ PlayerTab:CreateButton({
 })
 
 ------------------------------------------------------------------------
--- TAB 5: CHARACTER UTILITIES MOD
+-- TAB 6: CHARACTER UTILITIES MOD
 ------------------------------------------------------------------------
 local MiscTab = Window:CreateTab("Character Hack", "sliders")
 local Noclip = false
