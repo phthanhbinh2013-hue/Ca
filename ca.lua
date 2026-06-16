@@ -1,17 +1,21 @@
 -- =========================================================
--- GROW A GARDEN 2 - ULTRA COMPATIBILITY CORE (KAVO UI)
--- SỬA LỖI TUYỆT ĐỐI KHÔNG LÊN GIAO DIỆN TRÊN MOBILE
+-- GROW A GARDEN 2 - REDZ PREMIUM V4 (ULTRA OPTIMIZED)
+-- FIX CHẠY NHANH - BIÊN DỊCH BỘ LỌC ESP PET MYTHICAL+
 -- =========================================================
 
--- Khởi tạo thư viện Kavo (Cực nhẹ, tương thích 100% với Delta/Hydrogen)
-local KavoUi = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
--- Chọn phong cách giao diện tối rực rỡ (Neon)
-local Window = KavoUi.CreateLib("🌱 Grow a Garden 2 - NeonHub", "Midnight")
+local RedzLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDZ39/Redz39/main/RedzLib-V5.lua"))()
 
--- SERVICES & PLAYERS
+local Window = RedzLib:MakeWindow({
+    Title = "🌱 Garden 2 Empire - V4",
+    SubTitle = "Rayfield Alternative (Redz UI)",
+    SaveFolder = "GardenV4Config"
+})
+
+-- SERVICES
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
 -- CONFIG STATES
@@ -22,10 +26,15 @@ local Settings = {
     AutoSell = false,
     AutoBuySeeds = false,
     SelectedSeed = "Tomato",
-    WalkSpeed = 16
+    WalkSpeed = 16,
+    EspPetEnabled = false,
+    EspFilter = "All Pets" -- Lọc độ hiếm: "All Pets", "Mythical Only", "Legendary & Up"
 }
 
--- HÀM DÒ TÌM REMOTE EVENT CHỐNG UPDATE GAME
+-- BỘ LƯU TRỮ ĐỐI TƯỢNG ESP
+local ActiveEspObjects = {}
+
+-- HÀM DÒ TÌM REMOTE EVENT THÔNG MINH
 local function GetGardenEvent(name)
     for _, child in pairs(ReplicatedStorage:GetDescendants()) do
         if child:IsA("RemoteEvent") and (child.Name:lower():find(name:lower())) then
@@ -36,24 +45,31 @@ local function GetGardenEvent(name)
 end
 
 ---------------------------------------------------------
--- CẤU TRÚC PHÂN CHIA TABS TRÊN KAVO UI
+-- TAB 1: AUTO FARM (TỐI ƯU HOÀN TOÀN)
 ---------------------------------------------------------
-local FarmTab = Window:NewTab("Auto Farm")
-local FarmSection = FarmTab:NewSection("Trồng Trọt & Chăm Sóc")
+local FarmTab = Window:MakeTab({"Auto Farm", "rbxassetid://4483345998"})
 
-FarmSection:NewToggle("🌱 Auto Plant Seeds (Tự Gieo Hạt)", "Tự động trồng hạt giống đã chọn", function(Value)
-    Settings.AutoPlant = Value
-end)
+FarmTab:AddSection({"Trồng Trọt Tuần Tự"})
 
-FarmSection:NewToggle("💧 Auto Water Plants (Tự Tưới Nước)", "Tự động giữ độ ẩm cho đất", function(Value)
-    Settings.AutoWater = Value
-end)
+FarmTab:AddToggle({
+    Name = "🌱 Auto Plant Seeds",
+    Default = false,
+    Callback = function(v) Settings.AutoPlant = v end
+})
 
-FarmSection:NewToggle("✂️ Auto Harvest (Tự Thu Hoạch)", "Tự động hái nông sản khi chín", function(Value)
-    Settings.AutoHarvest = Value
-end)
+FarmTab:AddToggle({
+    Name = "💧 Auto Water Plants",
+    Default = false,
+    Callback = function(v) Settings.AutoWater = v end
+})
 
--- Vòng lặp nông trại chạy ngầm an toàn
+FarmTab:AddToggle({
+    Name = "✂️ Auto Harvest",
+    Default = false,
+    Callback = function(v) Settings.AutoHarvest = v end
+})
+
+-- Luồng cày nông trại không gây delay CPU
 task.spawn(function()
     while true do
         if Settings.AutoPlant or Settings.AutoWater or Settings.AutoHarvest then
@@ -62,18 +78,18 @@ task.spawn(function()
                     local ev = GetGardenEvent("plant") or GetGardenEvent("seed")
                     if ev then ev:FireServer(Settings.SelectedSeed) end
                 end
-                task.wait(0.1)
+                task.wait(0.08)
                 if Settings.AutoWater then
                     local ev = GetGardenEvent("water") or GetGardenEvent("moisture")
                     if ev then ev:FireServer() end
                 end
-                task.wait(0.1)
+                task.wait(0.08)
                 if Settings.AutoHarvest then
                     local ev = GetGardenEvent("harvest") or GetGardenEvent("collect")
                     if ev then ev:FireServer() end
                 end
             end)
-            task.wait(0.2)
+            task.wait(0.15)
         else
             task.wait(0.5)
         end
@@ -81,24 +97,29 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- TAB ĐỔI MỒI / HẠT GIỐNG & KINH TẾ
+-- TAB 2: SHOP & ECONOMY
 ---------------------------------------------------------
-local ShopTab = Window:NewTab("Shop & Sell")
-local ShopSection = ShopTab:NewSection("Cửa Hàng Nông Sản")
+local ShopTab = Window:MakeTab({"Shop & Sell", "rbxassetid://4483345998"})
 
-ShopSection:NewDropdown("Select Seed Type", "Chọn loại hạt để trồng và mua", {"Tomato", "Carrot", "Potato", "Pumpkin", "Strawberry", "Watermelon"}, function(Option)
-    Settings.SelectedSeed = Option
-end)
+ShopTab:AddDropdown({
+    Name = "Select Seed Type",
+    Options = {"Tomato", "Carrot", "Potato", "Pumpkin", "Strawberry", "Watermelon"},
+    Default = "Tomato",
+    Callback = function(Option) Settings.SelectedSeed = Option end
+})
 
-ShopSection:NewToggle("🛒 Auto Buy Selected Seed", "Tự động mua thêm hạt giống khi trồng", function(Value)
-    Settings.AutoBuySeeds = Value
-end)
+ShopTab:AddToggle({
+    Name = "🛒 Auto Buy Selected Seed",
+    Default = false,
+    Callback = function(v) Settings.AutoBuySeeds = v end
+})
 
-ShopSection:NewToggle("💰 Auto Sell Crops (Tự Động Bán)", "Tự động bán sạch sản vật kiếm tiền", function(Value)
-    Settings.AutoSell = Value
-end)
+ShopTab:AddToggle({
+    Name = "💰 Auto Sell Crops",
+    Default = false,
+    Callback = function(v) Settings.AutoSell = v end
+})
 
--- Vòng lặp quản lý tiền tệ và kho bãi
 task.spawn(function()
     while true do
         if Settings.AutoBuySeeds or Settings.AutoSell then
@@ -113,7 +134,7 @@ task.spawn(function()
                     if ev then ev:FireServer() end
                 end
             end)
-            task.wait(2.0)
+            task.wait(1.5)
         else
             task.wait(1)
         end
@@ -121,32 +142,135 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- TAB TIỆN ÍCH UTILITIES
+-- TAB 3: VISUALS & ESP PET (TÍNH NĂNG MỚI THEO YÊU CẦU)
 ---------------------------------------------------------
-local UtilTab = Window:NewTab("Utilities")
-local UtilSection = UtilTab:NewSection("Hỗ Trợ Nhân Vật")
+local VisualTab = Window:MakeTab({"Visuals/ESP", "rbxassetid://4483345998"})
 
-UtilSection:NewSlider("WalkSpeed Modifier", "Thay đổi tốc độ chạy của bạn", 120, 16, function(Value)
-    Settings.WalkSpeed = Value
+VisualTab:AddSection({"Bộ Lọc ESP Thú Cưng"})
+
+VisualTab:AddDropdown({
+    Name = "ESP Rarity Filter",
+    Options = {"All Pets", "Mythical Only", "Legendary & Up"},
+    Default = "All Pets",
+    Callback = function(Option)
+        Settings.EspFilter = Option
+    end
+})
+
+-- Hàm dọn dẹp ESP cũ
+local function ClearAllPetEsp()
+    for pet, esp in pairs(ActiveEspObjects) do
+        if esp then esp:Destroy() end
+        ActiveEspObjects[pet] = nil
+    end
+end
+
+-- Hàm tạo ESP cho từng con Pet cụ thể
+local function ApplyEspToPet(pet)
+    if not pet:IsA("Model") or ActiveEspObjects[pet] then return end
+
+    -- Đọc thuộc tính độ hiếm (phổ biến trong cấu trúc Roblox là đặt tên hoặc qua StringValue)
+    local rarityValue = pet:FindFirstChild("Rarity") or pet:FindFirstChild("RarityValue")
+    local petRarity = rarityValue and rarityValue.Value or pet.Name
+
+    -- Kiểm tra bộ lọc người dùng chọn
+    if Settings.EspFilter == "Mythical Only" and not string.find(string.lower(petRarity), "mythical") then
+        return
+    elseif Settings.EspFilter == "Legendary & Up" then
+        if not (string.find(string.lower(petRarity), "legendary") or string.find(string.lower(petRarity), "mythical")) then
+            return
+        end
+    end
+
+    -- Vẽ Box Highlight (Chế độ phát sáng xuyên tường hiện đại)
+    local Highlight = Instance.new("Highlight")
+    Highlight.Name = "PetEspHighlight"
+    Highlight.Adornee = pet
+    Highlight.FillColor = string.find(string.lower(petRarity), "mythical") and Color3.fromRGB(255, 0, 255) or Color3.fromRGB(255, 215, 0)
+    Highlight.FillTransparency = 0.4
+    Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    Highlight.OutlineTransparency = 0
+    Highlight.Parent = CoreGui
+
+    ActiveEspObjects[pet] = Highlight
+end
+
+VisualTab:AddToggle({
+    Name = "🐾 Enable Pet ESP Tracker",
+    Default = false,
+    Callback = function(Value)
+        Settings.EspPetEnabled = Value
+        if not Value then ClearAllPetEsp() end
+    end
+})
+
+-- Vòng lặp quét thế giới tìm Pet để vẽ ESP
+task.spawn(function()
+    while true do
+        if Settings.EspPetEnabled then
+            pcall(function()
+                -- Quét trong Workspace (Nơi chứa Pet rơi ra hoặc Pet đi theo người)
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj:IsA("Model") and (obj.Name:lower():find("pet") or obj:FindFirstChild("HumanoidRootPart")) then
+                        if obj ~= LocalPlayer.Character then
+                            ApplyEspToPet(obj)
+                        end
+                    end
+                end
+                
+                -- Dọn dẹp các Pet đã biến mất khỏi Game
+                for pet, esp in pairs(ActiveEspObjects) do
+                    if not pet or not pet.Parent then
+                        if esp then esp:Destroy() end
+                        ActiveEspObjects[pet] = nil
+                    end
+                end
+            end)
+        end
+        task.wait(2.0)
+    end
+end)
+
+---------------------------------------------------------
+-- TAB 4: UTILITIES & FIX CHẠY NHANH
+---------------------------------------------------------
+local UtilTab = Window:MakeTab({"Utilities", "rbxassetid://4483345998"})
+
+UtilTab:AddSection({"Tối Ưu Nhân Vật"})
+
+UtilTab:AddSlider({
+    Name = "WalkSpeed Customizer",
+    Min = 16, Max = 150, Default = 16,
+    Callback = function(Value)
+        Settings.WalkSpeed = Value
+    end
+})
+
+-- FIX CHẠY NHANH TUYỆT ĐỐI: Khóa dính chỉ số WalkSpeed theo từng khung hình máy máy
+RunService.Stepped:Connect(function()
     pcall(function()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = Value
+            if LocalPlayer.Character.Humanoid.WalkSpeed ~= Settings.WalkSpeed then
+                LocalPlayer.Character.Humanoid.WalkSpeed = Settings.WalkSpeed
+            end
         end
     end)
 end)
 
-UtilSection:NewButton("Fullbright (Sáng Rực Bản Đồ)", "Xóa tan màn đêm trong game", function()
-    pcall(function()
-        local Lighting = game:GetService("Lighting")
-        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-        Lighting.Brightness = 2
-        Lighting.ClockTime = 14
-    end)
-end)
+UtilTab:AddButton({
+    Name = "Fullbright (Sáng Rực Bản Đồ)",
+    Callback = function()
+        pcall(function()
+            local Lighting = game:GetService("Lighting")
+            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+            Lighting.Brightness = 2
+        end)
+    end
+})
 
--- Tự động áp dụng lại tốc độ chạy sau khi nhân vật hồi sinh
-LocalPlayer.CharacterAdded:Connect(function(Char)
-    local Hum = Char:WaitForChild("Humanoid")
-    task.wait(0.5)
-    Hum.WalkSpeed = Settings.WalkSpeed
+-- TỰ ĐỘNG GIẢI PHÓNG BỘ NHỚ CHỐNG VĂNG GAME (TREO ĐÊM)
+task.spawn(function()
+    while task.wait(10) do
+        collectgarbage("step", 200)
+    end
 end)
