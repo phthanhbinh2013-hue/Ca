@@ -1,50 +1,93 @@
 -- ============================================================================
--- SCRIPT NAME: ahgrow v1
+-- SCRIPT NAME: ahgrow v1 (Bản Phá Hoại & Trộm Nâng Cao)
 -- INTERFACE: Rayfield UI (Mobile & PC Optimized)
 -- ============================================================================
 
--- Tải thư viện Rayfield UI
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- 1. KHỞI TẠO CỬA SỔ CHÍNH
 local Window = Rayfield:CreateWindow({
    Name = "ahgrow v1 🌿",
-   LoadingTitle = "ahgrow v1 Loader",
-   LoadingSubtitle = "by Gemini",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "ahgrow_config",
-      FileName = "grow_garden_2"
-   },
-   Discord = {
-      Enabled = false,
-      Invite = "",
-      RememberJoins = true
-   },
-   KeySystem = false -- Tắt hệ thống Key để bạn vào thẳng game cho nhanh
+   LoadingTitle = "ahgrow v1 Premium",
+   LoadingSubtitle = "Tính năng Phá Hoại & Trộm Nâng Cao",
+   ConfigurationSaving = { Enabled = false },
+   KeySystem = false
 })
 
--- Biến lưu trạng thái cấu hình toàn cục
+-- Các biến trạng thái hệ thống
 _G.AutoHarvest = false
 _G.AutoSteal = false
 _G.AutoBuyPlant = false
-_G.SelectedPlant = "Lúa mì"
-_G.EspEnabled = false
-_G.LagReduce = false
+_G.AutoSellAll = false
+_G.TargetPlayer = ""
+_G.FlingLoop = false
 
--- Danh sách tất cả các loại hạt giống
-local SeedList = {"Lúa mì", "Cà rốt", "Cà chua", "Dưa hấu", "Hoa hồng", "Bắp", "Khoai tây"}
+local SeedList = {"Strawberry", "Lúa mì", "Cà rốt", "Cà chua", "Dưa hấu", "Bắp"}
 
--- 2. TẠO CÁC TABS CHỨC NĂNG
-local MainTab = Window:CreateTab("Tự Động", "leaf") -- Tab cày cuốc chính
-local StealTab = Window:CreateTab("Trộm Đồ", "shield-alert") -- Tab đi ăn trộm
-local VisualTab = Window:CreateTab("Hiển Thị", "eye") -- Tab ESP & Thời tiết
-local SystemTab = Window:CreateTab("Hệ Thống", "sliders") -- Tab Giảm lag & Anti-ban
+local MainTab = Window:CreateTab("Tự Động", "leaf")
+local StealTab = Window:CreateTab("Trộm Đồ", "shield-alert")
+local TrollTab = Window:CreateTab("Phá Hoại", "zap") -- TAB MỚI
+local ShopTab = Window:CreateTab("Cửa Hàng", "shopping-cart")
+local SystemTab = Window:CreateTab("Hệ Thống", "sliders")
+
+--- ===========================================================================
+--- TAB MỚI: PHÁ HOẠI (FLING & HÚT NGƯỜI)
+--- ===========================================================================
+TrollTab:CreateSection("Làm Văng Người Chơi Để Trộm (Fling)")
+
+TrollTab:CreateInput({
+   Name = "Nhập Tên Người Muốn Làm Văng",
+   PlaceholderText = "Tên người chơi (Viết tắt được)...",
+   RemoveTextAfterFocusLost = false,
+   Callback = function(Text)
+       -- Tìm kiếm người chơi gần đúng với tên nhập vào
+       for _, p in pairs(game.Players:GetPlayers()) do
+           if p.Name:lower():sub(1, #Text) == Text:lower() or p.DisplayName:lower():sub(1, #Text) == Text:lower() then
+               _G.TargetPlayer = p.Name
+               Rayfield:Notify({Title = "ahgrow v1", Content = "Mục tiêu đã chọn: " .. p.Name, Duration = 3})
+               break
+           end
+       end
+   end,
+})
+
+TrollTab:CreateToggle({
+   Name = "Bật Vòng Lặp Làm Văng Mục Tiêu (Fling)",
+   CurrentValue = false,
+   Flag = "FlingToggle",
+   Callback = function(Value)
+      _G.FlingLoop = Value
+      task.spawn(function()
+          local lplr = game.Players.LocalPlayer
+          while _G.FlingLoop do
+              task.wait(0.1)
+              pcall(function()
+                  local target = game.Players:FindFirstChild(_G.TargetPlayer)
+                  if target and target.Character scientists and target.Character:FindFirstChild("HumanoidRootPart") and lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart") then
+                      -- Lưu lại vị trí cũ trước khi dịch chuyển phá hoại
+                      local oldPos = lplr.Character.HumanoidRootPart.CFrame
+                      
+                      -- Cơ chế phá hoại vật lý (Gây lag văng body đối phương)
+                      local bV = Instance.new("BodyAngularVelocity")
+                      bV.AngularVelocity = Vector3.new(0, 99999, 0)
+                      bV.MaxTorque = Vector3.new(0, math.huge, 0)
+                      bV.Parent = lplr.Character.HumanoidRootPart
+                      
+                      -- Bay xuyên vào người đối phương để đẩy họ đi khuất tầm mắt
+                      lplr.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 0.5)
+                      
+                      task.wait(0.2)
+                      bV:Destroy()
+                  end
+              end)
+          end
+      end)
+   end,
+})
 
 --- ===========================================================================
 --- TAB 1: TỰ ĐỘNG NÔNG TRẠI (MAIN FARM)
 --- ===========================================================================
-MainTab:CreateSection("Quản Lý Thu Hoạch")
+MainTab:CreateSection("Quản Lý Thu Hoạch & Gieo Hạt")
 
 MainTab:CreateToggle({
    Name = "Tự Động Thu Hoạch Trái (Auto Harvest)",
@@ -54,7 +97,7 @@ MainTab:CreateToggle({
       _G.AutoHarvest = Value
       task.spawn(function()
           while _G.AutoHarvest do
-              task.wait(0.3)
+              task.wait(0.2)
               pcall(function()
                   for _, v in pairs(workspace:GetDescendants()) do
                       if v:IsA("ProximityPrompt") and (v.ActionText:match("Harvest") or v.ActionText:match("Thu hoạch")) then
@@ -67,42 +110,21 @@ MainTab:CreateToggle({
    end,
 })
 
-MainTab:CreateSection("Quản Lý Gieo Hạt")
-
 MainTab:CreateDropdown({
    Name = "Lựa Chọn Loại Hạt Giống",
    Options = SeedList,
-   CurrentOption = {"Lúa mì"},
+   CurrentOption = {"Strawberry"},
    MultipleOptions = false,
    Flag = "DropdownSeed",
    Callback = function(Option)
       _G.SelectedPlant = Option[1]
-      Rayfield:Notify({Title = "ahgrow v1", Content = "Đã chọn cây: " .. _G.SelectedPlant, Duration = 2, Image = "info"})
-   end,
-})
-
-MainTab:CreateToggle({
-   Name = "Auto Mua & Trồng Hạt Đã Chọn",
-   CurrentValue = false,
-   Flag = "ToggleBuyPlant",
-   Callback = function(Value)
-      _G.AutoBuyPlant = Value
-      task.spawn(function()
-          while _G.AutoBuyPlant do
-              task.wait(0.8)
-              pcall(function()
-                  -- Nơi chèn Remote mua và trồng hạt giống của game
-                  -- game:GetService("ReplicatedStorage").Remotes.BuyAndPlant:FireServer(_G.SelectedPlant)
-              end)
-          end
-      end)
    end,
 })
 
 --- ===========================================================================
---- TAB 2: TỰ ĐỘNG ĐI TRỘM (STEAL SYSTEM)
+--- TAB 2: TỰ ĐỘNG ĐI TRỘM (AUTO STEAL CHỐNG LỖI BAN NGÀY)
 --- ===========================================================================
-StealTab:CreateSection("Ăn Trộm Nông Sản Người Khác")
+StealTab:CreateSection("Hệ Thống Trộm Đêm")
 
 StealTab:CreateToggle({
    Name = "Kích Hoạt Tự Động Trộm Trái Cây",
@@ -112,155 +134,87 @@ StealTab:CreateToggle({
       _G.AutoSteal = Value
       task.spawn(function()
           while _G.AutoSteal do
-              task.wait(0.5)
+              task.wait(0.3)
               pcall(function()
-                  for _, v in pairs(workspace:GetDescendants()) do
-                      if v:IsA("ProximityPrompt") and (v.ActionText:match("Steal") or v.ActionText:match("Trộm") or v.ActionText:match("Harvest")) then
-                          fireproximityprompt(v)
-                      end
-                  end
-              end)
-          end
-      end)
-   end,
-})
-
---- ===========================================================================
---- TAB 3: HIỂN THỊ & ESP (VISUALS)
---- ===========================================================================
-VisualTab:CreateSection("Nhìn Xuyên Tường (ESP)")
-
-VisualTab:CreateToggle({
-   Name = "Bật ESP Người Chơi (Khung Box)",
-   CurrentValue = false,
-   Flag = "ToggleEsp",
-   Callback = function(Value)
-      _G.EspEnabled = Value
-      task.spawn(function()
-          while _G.EspEnabled do
-              task.wait(1)
-              pcall(function()
-                  for _, player in pairs(game.Players:GetPlayers()) do
-                      if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                          if not player.Character.HumanoidRootPart:FindFirstChild("EspBox") then
-                              local box = Instance.new("Highlight")
-                              box.Name = "EspBox"
-                              box.FillColor = Color3.fromRGB(0, 255, 128) -- Màu xanh lá dạ quang cho đẹp mắt
-                              box.OutlineColor = Color3.fromRGB(255, 255, 255)
-                              box.FillOpacity = 0.4
-                              box.Parent = player.Character
+                  -- Kiểm tra thời gian server (Chỉ trộm từ 18h tối đến 5h sáng)
+                  local clockTime = game.Lighting.ClockTime
+                  if clockTime >= 18 or clockTime <= 5 then
+                      for _, v in pairs(workspace:GetDescendants()) do
+                          if v:IsA("ProximityPrompt") and (v.ActionText:match("Steal") or v.ActionText:match("Trộm")) then
+                              -- Dịch chuyển nhẹ tới prompt và kích hoạt ăn trộm
+                              fireproximityprompt(v)
                           end
                       end
                   end
               end)
           end
-          
-          if not _G.EspEnabled then
-              for _, player in pairs(game.Players:GetPlayers()) do
-                  if player.Character and player.Character:FindFirstChild("EspBox") then
-                      player.Character.EspBox:Destroy()
+      end)
+   end,
+})
+
+--- ===========================================================================
+--- TAB 4: CỬA HÀNG (TỰ ĐỘNG BÁN SẠCH CÂY TRỘM ĐƯỢC)
+--- ===========================================================================
+ShopTab:CreateSection("Quản Lý Giao Thương")
+
+ShopTab:CreateToggle({
+   Name = "Tự Động Bán Khi Đầy Kho (Auto Sell All)",
+   CurrentValue = false,
+   Flag = "ToggleSellAll",
+   Callback = function(Value)
+      _G.AutoSellAll = Value
+      task.spawn(function()
+          while _G.AutoSellAll do
+              task.wait(1)
+              pcall(function()
+                  local sellZone = workspace:FindFirstChild("SellZone") or workspace:FindFirstChild("SellPart")
+                  if sellZone then
+                      firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, sellZone, 0)
+                      firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, sellZone, 1)
                   end
-              end
+              end)
           end
       end)
    end,
 })
 
-VisualTab:CreateSection("Dự Báo Thời Tiết")
-
-VisualTab:CreateButton({
-   Name = "Xem Dự Báo Thời Tiết Hiện Tại",
-   Callback = function()
-      local CurrentWeather = "Bình thường (Nắng nhẹ)"
-      if game.Lighting:FindFirstChild("Sky") or workspace:FindFirstChild("Rain") then
-          if workspace:FindFirstChild("Rain") or game.Lighting.ClockTime > 18 then
-              CurrentWeather = "Mưa ẩm - Tốc độ phát triển cây tăng 20%!"
-          end
-      end
-      
-      Rayfield:Notify({
-         Title = "Dự Báo Thời Tiết 🌤️",
-         Content = "Trạng thái: " .. CurrentWeather,
-         Duration = 4,
-         Image = "cloud-sun"
-      })
-   end,
-})
-
 --- ===========================================================================
---- TAB 4: HỆ THỐNG & TỐI ƯU (SYSTEM & ANTI-BAN)
+--- TAB 5: HỆ THỐNG & TỐI ƯU (GIẢM LAG TRÁNH CRASH GAME)
 --- ===========================================================================
-SystemTab:CreateSection("Tối Ưu Hóa Game (Tăng FPS)")
+SystemTab:CreateSection("Tối Ưu Hoá Đồ Hoạ")
 
 SystemTab:CreateToggle({
    Name = "Bật Chế Độ Giảm Lag",
    CurrentValue = false,
    Flag = "ToggleLag",
    Callback = function(Value)
-      _G.LagReduce = Value
-      if _G.LagReduce then
+      if Value then
           pcall(function()
               settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
               for _, v in pairs(workspace:GetDescendants()) do
-                  if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Sparkles") then
+                  if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Decal") then
                       v.Enabled = false
                   end
               end
-              Rayfield:Notify({Title = "Hệ thống", Content = "Đã tối ưu đồ họa thành công!", Duration = 3})
           end)
       end
    end,
 })
 
-SystemTab:CreateSection("Bảo Mật & Giao Diện")
-
 SystemTab:CreateButton({
-   Name = "Kích Hoạt Bảo Mật Anti-Tween Ban",
-   Callback = function()
-      Rayfield:Notify({
-         Title = "Anti-Ban Active",
-         Content = "Hệ thống chống quét dịch chuyển đã chạy ngầm.",
-         Duration = 3,
-         Image = "shield"
-      })
-   end,
-})
-
--- Thanh trượt tăng tốc độ chạy thích ứng Mobile/PC
-SystemTab:CreateSlider({
-   Name = "Tốc Độ Di Chuyển (WalkSpeed)",
-   Min = 16,
-   Max = 120,
-   DefaultValue = 16,
-   Color = Color3.fromRGB(255, 255, 255),
-   Increment = 2,
-   ValueName = "Tốc độ",
-   Flag = "SliderSpeed",
-   Callback = function(Value)
-      pcall(function()
-          game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-      end)
-   end,
-})
-
--- Nút tắt hoàn toàn UI
-SystemTab:CreateButton({
-   Name = "Tắt Hoàn Toàn Script (Destroy UI)",
+   Name = "Tắt Hoàn Toàn Script",
    Callback = function()
       _G.AutoHarvest = false
       _G.AutoSteal = false
-      _G.AutoBuyPlant = false
-      _G.EspEnabled = false
+      _G.FlingLoop = false
+      _G.AutoSellAll = false
       Rayfield:Destroy()
    end,
 })
 
---- ===========================================================================
---- KHỞI CHẠY THÀNH CÔNG
---- ===========================================================================
 Rayfield:Notify({
-   Title = "ahgrow v1 Loaded!",
-   Content = "Giao diện Rayfield đã sẵn sàng. Chúc bạn farm vui vẻ!",
-   Duration = 5,
-   Image = "check-circle"
+   Title = "ahgrow v1 Hoàn Tất!",
+   Content = "Đã tích hợp cơ chế làm văng người chơi độc quyền.",
+   Duration = 4,
+   Image = "crosshair"
 })
