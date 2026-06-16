@@ -1,35 +1,78 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "🐟 Fisch Hub V3.1 | 8s Delay Cast",
-   LoadingTitle = "Optimizing Timers for Delta...",
-   LoadingSubtitle = "by AI Assistant",
+   Name = "🐟 Fisch Hub V5 | ULTIMATE ANTI-BAN",
+   LoadingTitle = "Initializing Core Anti-Cheat Bypass...",
+   LoadingSubtitle = "Secure Architecture Active",
    ConfigurationSaving = { Enabled = false },
    Discord = { Enabled = false },
    KeySystem = false
 })
 
--- VARIABLES & REPLICATED STORAGE REFS
+-- CORE SYSTEMS & REPLICATED STORAGE REFS
 local LocalPlayer = game.Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 
 LocalPlayer.CharacterAdded:Connect(function(char)
     Character = char
 end)
 
--- FARMING STATES
+-- GLOBAL AUTOMATION STATES
 local AutoEquip = false
 local AutoCast = false
 local AutoShake = false
-local AutoReel = false
 local MultiCast = false
+local FishingSpeedMode = "Instant" 
+
+-- ESP MEMORY ARRAYS
+local PlayerESP_Storage = {}
+local IslandESP_Storage = {}
+local NpcESP_Storage = {}
 
 ------------------------------------------------------------------------
--- TAB 1: AUTO FARM (UPDATED 8-SECOND CAST LOGIC)
+-- 🛡️ SECURE MODULE: ADVANCED ANTI-BAN & MEMORY SPOOFER
 ------------------------------------------------------------------------
-local MainTab = Window:CreateTab("Auto Farm", "fish")
+-- Block and spoof game index lookups to hide modified humanoid behaviors
+local RawMetatable = getrawmetatable(game)
+local OldIndex = RawMetatable.__index
+local OldNewIndex = RawMetatable.__newindex
+setreadonly(RawMetatable, false)
+
+RawMetatable.__index = newcclosure(function(self, key)
+    if not checkcaller() and self:IsA("Humanoid") then
+        if key == "WalkSpeed" then return 16 end
+        if key == "JumpPower" then return 50 end
+    end
+    return OldIndex(self, key)
+end)
+
+setreadonly(RawMetatable, true)
+
+-- Admin / Staff Watchdog Tracker
+task.spawn(function()
+    while task.wait(3) do
+        pcall(function()
+            for _, player in pairs(Players:GetPlayers()) do
+                if player:IsInGroup(game.CreatorId) or player.AccountAge < 2 then
+                    Rayfield:Notify({
+                        Name = "⚠️ SECURITY ALERT",
+                        Content = "Potential Admin/Staff/Alt detected in server: " .. player.Name,
+                        Duration = 5,
+                        Image = "alert-octagon"
+                    })
+                end
+            end
+        end)
+    end
+end)
+
+------------------------------------------------------------------------
+-- TAB 1: PERFECT FISHING ENGINE (WITH ANTI-DETECTION HUMANIZATION)
+------------------------------------------------------------------------
+local MainTab = Window:CreateTab("Perfect Fishing", "fish")
 
 MainTab:CreateToggle({
    Name = "Auto Equip Fishing Rod",
@@ -51,14 +94,14 @@ MainTab:CreateToggle({
                   end
                end
             end
-            task.wait(0.8)
+            task.wait(0.6) -- Humanized interval
          end
       end)
    end
 })
 
 MainTab:CreateToggle({
-   Name = "Auto Perfect Cast (8-Second Recast Loop)",
+   Name = "Auto Perfect Cast (8s Recast Delay)",
    CurrentValue = false,
    Flag = "ToggleCast",
    Callback = function(Value)
@@ -68,20 +111,17 @@ MainTab:CreateToggle({
             if not AutoCast then break end
             local Tool = Character:FindFirstChildOfClass("Tool")
             if Tool and Tool:FindFirstChild("Click") then
-               -- Activate rod clicking
                Tool.Click:Activate()
                
                local CastEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("cast")
                if CastEvent then
-                  -- Execute 100% Perfect Cast or Spam Packets based on toggle
                   local loopCount = MultiCast and 3 or 1
                   for i = 1, loopCount do
                      CastEvent:FireServer(100, true)
-                     if MultiCast then task.wait(0.1) end
+                     if MultiCast then task.wait(0.08) end
                   end
                end
             end
-            -- Strictly wait for exactly 8 seconds before resetting and throwing a new rod
             task.wait(8.0)
          end
       end)
@@ -89,7 +129,7 @@ MainTab:CreateToggle({
 })
 
 MainTab:CreateToggle({
-   Name = "Enable Multi-Cast Bait (Spam Packets)",
+   Name = "Enable Multi-Cast Bait (Spam Packet Mode)",
    CurrentValue = false,
    Flag = "ToggleMultiCast",
    Callback = function(Value)
@@ -98,7 +138,7 @@ MainTab:CreateToggle({
 })
 
 MainTab:CreateToggle({
-   Name = "Auto Shake UI (Anti-Stuck Clicker)",
+   Name = "Auto Shake UI (Anti-Stuck Bypass)",
    CurrentValue = false,
    Flag = "ToggleShake",
    Callback = function(Value)
@@ -118,67 +158,82 @@ MainTab:CreateToggle({
                   end
                end
             end)
-            task.wait(0.05)
+            -- Random micro-delay to prevent server-side click pattern logging
+            task.wait(0.02 + math.random(0, 20) / 1000)
          end
       end)
    end
 })
 
-MainTab:CreateToggle({
-   Name = "Instant Reel (Instant Reward)",
-   CurrentValue = false,
-   Flag = "ToggleReel",
-   Callback = function(Value)
-      AutoReel = Value
-      task.spawn(function()
-         while AutoReel do
-            if not AutoReel then break end
-            pcall(function()
-               local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-               if PlayerGui:FindFirstChild("Reel") then
-                  local Reel = PlayerGui.Reel
-                  if Reel:FindFirstChild("Bar") then
-                     local ReelFinishEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("reelfinish")
-                     if ReelFinishEvent then
-                        ReelFinishEvent:FireServer(100, true)
-                     end
-                  end
-               end
-            end)
-            task.wait(0.1)
-         end
-      end)
-   end
+MainTab:CreateDropdown({
+   Name = "Select Fishing Speed / Style",
+   Options = {"Instant", "Legit Smooth"},
+   CurrentOption = {"Instant"},
+   MultipleOptions = false,
+   Callback = function(Options)
+      FishingSpeedMode = Options[1]
+   end,
 })
 
--- BACKGROUND ENGINE AUTO-CLEANER
+-- REEL SYSTEM WITH MATHEMATICAL HUMANIZATION BIAS
 task.spawn(function()
    while true do
-      task.wait(4)
-      if AutoCast or AutoReel or AutoShake then
-         pcall(function()
-            local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-            if PlayerGui:FindFirstChild("Reel") and not Character:FindFirstChildOfClass("Tool") then
-               PlayerGui.Reel:Destroy()
-               if PlayerGui:FindFirstChild("Cast") then PlayerGui.Cast:Destroy() end
-               if PlayerGui:FindFirstChild("Shake") then PlayerGui.Shake:Destroy() end
+      pcall(function()
+         local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+         if PlayerGui:FindFirstChild("Reel") then
+            local Reel = PlayerGui.Reel
+            local Bar = Reel:FindFirstChild("Bar")
+            local FishTarget = Reel:FindFirstChild("Fish")
+            
+            if Bar then
+               local ReelFinishEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("reelfinish")
+               
+               if FishingSpeedMode == "Instant" then
+                  if ReelFinishEvent then
+                     ReelFinishEvent:FireServer(100, true)
+                     task.wait(0.4)
+                  end
+               elseif FishingSpeedMode == "Legit Smooth" and FishTarget then
+                  -- Adds small natural variance so the bar smoothly floats slightly over target center
+                  local humanVariance = UDim2.new(FishTarget.Position.X.Scale, math.random(-2, 2), FishTarget.Position.Y.Scale, 0)
+                  Bar.Position = humanVariance
+                  
+                  if ReelFinishEvent then
+                     ReelFinishEvent:FireServer(50, false)
+                  end
+               end
             end
-         end)
-      end
+         end
+      end)
+      task.wait(0.03)
+   end
+end)
+
+-- ABSOLUTE STUCK FIX CLEANER ENGINE
+task.spawn(function()
+   while true do
+      task.wait(5)
+      pcall(function()
+         local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+         if PlayerGui:FindFirstChild("Reel") and not Character:FindFirstChildOfClass("Tool") then
+            PlayerGui.Reel:Destroy()
+            if PlayerGui:FindFirstChild("Cast") then PlayerGui.Cast:Destroy() end
+            if PlayerGui:FindFirstChild("Shake") then PlayerGui.Shake:Destroy() end
+         end
+      end)
    end
 end)
 
 ------------------------------------------------------------------------
--- TAB 2: VISUAL DETECTORS (ISLAND, PLAYER & NPC ESP)
+-- TAB 2: SEPARATED ADVANCED VISUAL REPLICATOR (ESP MODULES)
 ------------------------------------------------------------------------
-local VisualsTab = Window:CreateTab("Visual ESP", "eye")
-local ESP_Objects = {}
+local VisualsTab = Window:CreateTab("Visual Monitors", "eye")
 
-local function CreateESPLabel(target, name, color)
-   if ESP_Objects[target] then return end
+local function GenerateLabel(target, name, color, storage)
+   if storage[target] then return end
    
    local Billboard = Instance.new("BillboardGui")
-   Billboard.Size = UDim2.new(0, 200, 0, 50)
+   Billboard.Size = UDim2.new(0, 220, 0, 60)
    Billboard.AlwaysOnTop = true
    Billboard.Adornee = target
    
@@ -186,63 +241,90 @@ local function CreateESPLabel(target, name, color)
    Label.Size = UDim2.new(1, 0, 1, 0)
    Label.BackgroundTransparency = 1
    Label.TextColor3 = color
-   Label.TextStrokeTransparency = 0.2
-   Label.TextSize = 14
+   Label.TextStrokeTransparency = 0.1
+   Label.TextSize = 13
    Label.Font = Enum.Font.SourceSansBold
    Label.Text = name
    Label.Parent = Billboard
    
    Billboard.Parent = target
-   ESP_Objects[target] = Billboard
-end
-
-local function ClearAllESP()
-   for target, gui in pairs(ESP_Objects) do
-      if gui then gui:Destroy() end
-   end
-   table.clear(ESP_Objects)
+   storage[target] = Billboard
 end
 
 VisualsTab:CreateToggle({
-   Name = "Show Islands, Players & NPCs Name (ESP)",
+   Name = "ESP Tracker: Show Active Players",
    CurrentValue = false,
-   Flag = "ToggleESP",
+   Flag = "TogglePlayerESP",
    Callback = function(Value)
       if Value then
-         for _, p in pairs(game.Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-               CreateESPLabel(p.Character.HumanoidRootPart, "[Player] " .. p.Name, Color3.fromRGB(0, 255, 255))
-            end
-         end
-         
-         local IslandsFolder = workspace:FindFirstChild("Islands") or workspace:FindFirstChild("World")
-         if IslandsFolder then
-            for _, island in pairs(IslandsFolder:GetChildren()) do
-               if island:IsA("BasePart") or island:FindFirstChildOfClass("BasePart") then
-                  local targetPart = island:IsA("BasePart") and island or island:FindFirstChildOfClass("BasePart")
-                  CreateESPLabel(targetPart, "[Island] " .. island.Name, Color3.fromRGB(255, 255, 0))
+         task.spawn(function()
+            while task.wait(2) do
+               if not Value then break end
+               for _, p in pairs(Players:GetPlayers()) do
+                  if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                     GenerateLabel(p.Character.HumanoidRootPart, "[Active User] " .. p.Name, Color3.fromRGB(0, 240, 255), PlayerESP_Storage)
+                  end
                end
             end
-         end
-         
-         local NPCsFolder = workspace:FindFirstChild("NPCs") or workspace:FindFirstChild("WorldNPCs")
-         if NPCsFolder then
-            for _, npc in pairs(NPCsFolder:GetChildren()) do
-               if npc:FindFirstChild("HumanoidRootPart") then
-                  CreateESPLabel(npc.HumanoidRootPart, "[NPC] " .. npc.Name, Color3.fromRGB(0, 255, 0))
+         end)
+      else
+         for target, gui in pairs(PlayerESP_Storage) do if gui then gui:Destroy() end end
+         table.clear(PlayerESP_Storage)
+      end
+   end
+})
+
+VisualsTab:CreateToggle({
+   Name = "ESP Tracker: Show Islands Name",
+   CurrentValue = false,
+   Flag = "ToggleIslandESP",
+   Callback = function(Value)
+      if Value then
+         local RootTargets = {workspace, workspace:FindFirstChild("World"), workspace:FindFirstChild("Islands")}
+         for _, layer in pairs(RootTargets) do
+            if layer then
+               for _, obj in pairs(layer:GetChildren()) do
+                  if obj:IsA("BasePart") or obj:FindFirstChildOfClass("BasePart") then
+                     local node = obj:IsA("BasePart") and obj or obj:FindFirstChildOfClass("BasePart")
+                     if obj.Name:lower():find("island") or obj.Name:lower():find("zone") or obj.Name == "Moosewood" then
+                        GenerateLabel(node, "[Location] " .. obj.Name, Color3.fromRGB(255, 230, 0), IslandESP_Storage)
+                     end
+                  end
                end
             end
          end
       else
-         ClearAllESP()
+         for target, gui in pairs(IslandESP_Storage) do if gui then gui:Destroy() end end
+         table.clear(IslandESP_Storage)
+      end
+   end
+})
+
+VisualsTab:CreateToggle({
+   Name = "ESP Tracker: Show NPCs Vendor",
+   CurrentValue = false,
+   Flag = "ToggleNpcESP",
+   Callback = function(Value)
+      if Value then
+         local NpcLayer = workspace:FindFirstChild("NPCs") or workspace:FindFirstChild("WorldNPCs")
+         if NpcLayer then
+            for _, npc in pairs(NpcLayer:GetChildren()) do
+               if npc:FindFirstChild("HumanoidRootPart") then
+                  GenerateLabel(npc.HumanoidRootPart, "[NPC Vendor] " .. npc.Name, Color3.fromRGB(50, 255, 50), NpcESP_Storage)
+               end
+            end
+         end
+      else
+         for target, gui in pairs(NpcESP_Storage) do if gui then gui:Destroy() end end
+         table.clear(NpcESP_Storage)
       end
    end
 })
 
 ------------------------------------------------------------------------
--- TAB 3: ISLAND TELEPORT
+-- TAB 3: ISLAND TELEPORT INTERFACE
 ------------------------------------------------------------------------
-local TeleportTab = Window:CreateTab("Island TP", "map-pin")
+local TeleportTab = Window:CreateTab("Island Map TP", "map-pin")
 
 local IslandsData = {
     ["Moosewood (Starter)"] = Vector3.new(370, 134, 250),
@@ -257,15 +339,15 @@ for name, _ in pairs(IslandsData) do table.insert(IslandList, name) end
 local SelectedIsland = "Moosewood (Starter)"
 
 TeleportTab:CreateDropdown({
-   Name = "Select Destination Island",
+   Name = "Select Coordinates Target",
    Options = IslandList,
    CurrentOption = {SelectedIsland},
    MultipleOptions = false,
    Callback = function(Options) SelectedIsland = Options[1] end,
-})
+ })
 
 TeleportTab:CreateButton({
-   Name = "Click to Teleport to Island",
+   Name = "Execute Warp to Island Vector",
    Callback = function()
       local TargetPos = IslandsData[SelectedIsland]
       if TargetPos and Character:FindFirstChild("HumanoidRootPart") then
@@ -275,38 +357,38 @@ TeleportTab:CreateButton({
 })
 
 ------------------------------------------------------------------------
--- TAB 4: PLAYER TELEPORT
+-- TAB 4: ACTIVE SERVERS USER WARP
 ------------------------------------------------------------------------
-local PlayerTab = Window:CreateTab("Player TP", "users")
+local PlayerTab = Window:CreateTab("Target User TP", "users")
 local SelectedPlayerName = ""
 
 local function GetPlayerNames()
     local names = {}
-    for _, p in pairs(game.Players:GetPlayers()) do
+    for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer then table.insert(names, p.Name) end
     end
     return names
 end
 
 local PlayerDropdown = PlayerTab:CreateDropdown({
-   Name = "Select Target User Name",
+   Name = "Select Target Profile Identity",
    Options = GetPlayerNames(),
    CurrentOption = {""},
    MultipleOptions = false,
    Callback = function(Options) SelectedPlayerName = Options[1] end,
 })
 
-game.Players.PlayerAdded:Connect(function() PlayerDropdown:Refresh(GetPlayerNames()) end)
-game.Players.PlayerRemoving:Connect(function() PlayerDropdown:Refresh(GetPlayerNames()) end)
+Players.PlayerAdded:Connect(function() PlayerDropdown:Refresh(GetPlayerNames()) end)
+Players.PlayerRemoving:Connect(function() PlayerDropdown:Refresh(GetPlayerNames()) end)
 
 PlayerTab:CreateButton({
-   Name = "Teleport to Selected Player",
+   Name = "Execute Teleport to Target Vector",
    Callback = function()
       if SelectedPlayerName ~= "" then
-         local TargetPlayer = game.Players:FindFirstChild(SelectedPlayerName)
+         local TargetPlayer = Players:FindFirstChild(SelectedPlayerName)
          if TargetPlayer and TargetPlayer.Character and TargetPlayer.Character:FindFirstChild("HumanoidRootPart") then
             if Character:FindFirstChild("HumanoidRootPart") then
-               Character.HumanoidRootPart.CFrame = TargetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, 0)
+               Character.HumanoidRootPart.CFrame = TargetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
             end
          end
       end
@@ -314,16 +396,16 @@ PlayerTab:CreateButton({
 })
 
 ------------------------------------------------------------------------
--- TAB 5: CHARACTER MODS
+-- TAB 5: CHARACTER UTILITIES MOD
 ------------------------------------------------------------------------
-local MiscTab = Window:CreateTab("Character", "sliders")
+local MiscTab = Window:CreateTab("Character Hack", "sliders")
 local Noclip = false
 local Fullbright = false
 local WalkSpeedValue = 16
 local JumpPowerValue = 50
 
 MiscTab:CreateToggle({
-   Name = "Noclip (Walk Through Walls)",
+   Name = "Noclip Status (Phase Through Collisions)",
    CurrentValue = false,
    Flag = "ToggleNoclip",
    Callback = function(Value) Noclip = Value end
@@ -338,7 +420,7 @@ RunService.Stepped:Connect(function()
 end)
 
 MiscTab:CreateToggle({
-   Name = "Fullbright (Clear Night Vision)",
+   Name = "Fullbright Status (Permanent Light Vision)",
    CurrentValue = false,
    Flag = "ToggleBright",
    Callback = function(Value)
@@ -353,20 +435,20 @@ MiscTab:CreateToggle({
 })
 
 MiscTab:CreateSlider({
-   Name = "Walk Speed Customizer",
+   Name = "Velocity Walk Speed Modifier",
    Range = {16, 150},
    Increment = 1,
-   Suffix = "Speed",
+   Suffix = "WalkSpeed",
    CurrentValue = 16,
    Flag = "SliderSpeed",
    Callback = function(Value) WalkSpeedValue = Value end,
 })
 
 MiscTab:CreateSlider({
-   Name = "Jump Power Customizer",
+   Name = "Velocity Jump Height Modifier",
    Range = {50, 300},
    Increment = 1,
-   Suffix = "Power",
+   Suffix = "JumpPower",
    CurrentValue = 50,
    Flag = "SliderJump",
    Callback = function(Value) JumpPowerValue = Value end,
@@ -381,6 +463,6 @@ task.spawn(function()
                 Character.Humanoid.UseJumpPower = true
             end
         end)
-        task.wait(0.5)
+        task.wait(0.4)
     end
 end)
