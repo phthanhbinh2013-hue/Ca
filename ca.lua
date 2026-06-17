@@ -7,6 +7,7 @@ _G.AutoSteal = false
 _G.AutoSell = false
 _G.AutoSeeds = false
 _G.AntiAFK = true
+_G.LagReductionLevel = 0 -- 0: Tắt, 1: Thường, 2: Cấp 2 Siêu Mạnh
 
 -- 3 Hạt giống ưu tiên do bạn chọn
 _G.Priority1 = "Carrot"
@@ -22,9 +23,9 @@ local SeedList = {
 
 -- Khởi tạo Menu chính
 local Window = Rayfield:CreateWindow({
-   Name = "ahgrow v2.6 🌿 Premium Suite",
-   LoadingTitle = "ahgrow Premium v2.6",
-   LoadingSubtitle = "Đã sửa lỗi ngôn ngữ & Hướng đi bộ 🎉",
+   Name = "ahgrow v2.7 🌿 Premium Smooth Suite",
+   LoadingTitle = "ahgrow Premium v2.7",
+   LoadingSubtitle = "Fix Ngôn Ngữ & Thêm Giảm Lag Cấp 2 🚀",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
 })
@@ -37,40 +38,75 @@ local ShopSeedsTab = Window:CreateTab("Cửa Hàng Seeds", "shopping-bag")
 local SystemTab = Window:CreateTab("Cài Đặt (Settings)", "settings") 
 
 -- ===========================================================================
--- BẢN DỊCH NGÔN NGỮ ĐỘNG (DÙNG ĐỂ CẬP NHẬT UI LẬP TỨC)
+-- HỆ THỐNG CẬP NHẬT NGÔN NGỮ ĐA TẦNG (FIX LỖI)
 -- ===========================================================================
-local Elements = {} -- Lưu trữ các phần tử UI để thay đổi chữ
+local UIElements = {}
 
-local function UpdateLanguage()
-    if _G.CurrentLang == "VN" then
-        if Elements.SecHarvest then Elements.SecHarvest:SetText("Quản Lý Thu Hoạch Tự Động") end
-        if Elements.ToggleHarvest then Elements.ToggleHarvest:SetText("Tự Động Thu Hoạch Trái (Auto Harvest)") end
-        if Elements.SecSteal then Elements.SecSteal:SetText("Tự Động Đi Trộm Đồ") end
-        if Elements.ToggleSteal then Elements.ToggleSteal:SetText("Kích Hoạt Auto Trộm Trái Cây Đêm") end
-        if Elements.SecSell then Elements.SecSell:SetText("⚡ Tuyến Đường Tự Động Đi Bán Trái") end
-        if Elements.ToggleSell then Elements.ToggleSell:SetText("Bật Auto Sell Đi Bộ Khi Đầy Kho") end
-        if Elements.SecSeeds1 then Elements.SecSeeds1:SetText("📋 Cài Đặt 3 Hạt Giống Ưu Tiên") end
-        if Elements.SecSeeds2 then Elements.SecSeeds2:SetText("⚡ Tuyến Đường Auto Seeds Khi Có Tải Lại Kho") end
-        if Elements.ToggleSeeds then Elements.ToggleSeeds:SetText("Bật Auto Mua Hạt Khi Reset Stock") end
-        if Elements.SecLang then Elements.SecLang:SetText("Cấu Hình Ngôn Ngữ Hệ Thống") end
-        if Elements.ResetBtn then Elements.ResetBtn:SetText("Nút Reset Ngôn Ngữ Về Mặc Định") end
-    else
-        if Elements.SecHarvest then Elements.SecHarvest:SetText("Auto Harvest Management") end
-        if Elements.ToggleHarvest then Elements.ToggleHarvest:SetText("Auto Harvest Fruits") end
-        if Elements.SecSteal then Elements.SecSteal:SetText("Auto Steal System") end
-        if Elements.ToggleSteal then Elements.ToggleSteal:SetText("Enable Night Steal Mode") end
-        if Elements.SecSell then Elements.SecSell:SetText("⚡ Auto Sell Walk Route") end
-        if Elements.ToggleSell then Elements.ToggleSell:SetText("Enable Auto Walk Sell on Full") end
-        if Elements.SecSeeds1 then Elements.SecSeeds1:SetText("📋 Priority Seeds Configuration") end
-        if Elements.SecSeeds2 then Elements.SecSeeds2:SetText("⚡ Auto Seeds Route on Stock Reset") end
-        if Elements.ToggleSeeds then Elements.ToggleSeeds:SetText("Enable Auto Buy Seeds on Restock") end
-        if Elements.SecLang then Elements.SecLang:SetText("System Language Configuration") end
-        if Elements.ResetBtn then Elements.ResetBtn:SetText("Reset Language to Default Button") end
+local function ApplyLanguageUpdate()
+    local isVN = (_G.CurrentLang == "VN")
+    
+    -- Từ điển dịch thuật
+    local trans = {
+        SecHarvest = isVN and "Quản Lý Thu Hoạch Tự Động" or "Auto Harvest Management",
+        ToggleHarvest = isVN and "Tự Động Thu Hoạch Trái (Auto Harvest)" or "Auto Harvest Fruits",
+        SecSteal = isVN and "Tự Động Đi Trộm Đồ" or "Auto Steal System",
+        ToggleSteal = isVN and "Kích Hoạt Auto Trộm Trái Cây Đêm" or "Enable Night Steal Mode",
+        SecSell = isVN and "⚡ Tuyến Đường Tự Động Đi Bán Trái" or "⚡ Auto Sell Walk Route",
+        ToggleSell = isVN and "Bật Auto Sell Đi Bộ Khi Đầy Kho" or "Enable Auto Walk Sell on Full",
+        SecSeeds1 = isVN and "📋 Cài Đặt 3 Hạt Giống Ưu Tiên" or "📋 Priority Seeds Settings",
+        SecSeeds2 = isVN and "⚡ Tuyến Đường Auto Seeds Khi Có Tải Lại Kho" or "⚡ Auto Seeds Route on Restock",
+        ToggleSeeds = isVN and "Bật Auto Mua Hạt Khi Reset Stock" or "Enable Auto Buy Seeds on Restock",
+        SecLang = isVN and "Cấu Hình Ngôn Ngữ Hệ Thống" or "System Language Settings",
+        ResetBtn = isVN and "Nút Reset Ngôn Ngữ Về Mặc Định" or "Reset Language to Default"
+    }
+
+    -- Cập nhật chữ hiển thị trực tiếp vào phần tử UI
+    pcall(function()
+        for key, text in pairs(trans) do
+            if UIElements[key] then 
+                UIElements[key]:SetText(text)
+            end
+        end
+    end)
+end
+
+-- ===========================================================================
+-- HỆ THỐNG GIẢM LAG CẤP 2 (SUPER EXTREME SMOOTH MODE)
+-- ===========================================================================
+local function ApplyLagReduction()
+    if _G.LagReductionLevel == 0 then
+        if setfpscap then setfpscap(60) end
+    elseif _G.LagReductionLevel == 1 then
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        game:GetService("Lighting").GlobalShadows = false
+        if setfpscap then setfpscap(45) end
+    elseif _G.LagReductionLevel == 2 then
+        -- KÍCH HOẠT GIẢM LAG CẤP 2 BIẾN GAME THÀNH LOW POLY
+        pcall(function()
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+            game:GetService("Lighting").GlobalShadows = false
+            game:GetService("Lighting").BlurEffects:Clear()
+            
+            -- Ép tất cả các vật thể thành chất liệu trơn bóng cơ bản để giảm tải GPU
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("Part") or v:IsA("MeshPart") or v:IsA("UnionOperation") then
+                    v.Material = Enum.Material.SmoothPlastic
+                    v.Reflectance = 0
+                elseif v:IsA("Decal") or v:IsA("Texture") then
+                    v:Destroy()
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
+                    v.Enabled = false
+                end
+            end
+            
+            -- Khóa FPS thấp để máy siêu mát khi cày đêm
+            if setfpscap then setfpscap(20) end
+        end)
     end
 end
 
 -- ===========================================================================
--- HÀM ĐI BỘ ĐÚNG HƯỚNG (HUMANOID MOVETO)
+-- LOGIC ĐI BỘ (WALK LOGIC)
 -- ===========================================================================
 local function walkToPosition(targetPos)
     local player = game.Players.LocalPlayer
@@ -91,7 +127,7 @@ local function walkToPosition(targetPos)
     return false
 end
 
--- CON ĐƯỜNG 1: TỰ ĐỘNG ĐI BÁN (AUTO SELL)
+-- CON ĐƯỜNG 1: AUTO SELL
 local function runAutoSellRoute()
     local player = game.Players.LocalPlayer
     _G.AutoHarvest = false
@@ -112,15 +148,8 @@ local function runAutoSellRoute()
                 if dialogGui then
                     for _, option in pairs(dialogGui:GetDescendants()) do
                         if option:IsA("TextButton") and (option.Text:match("1") or option.Name:match("1")) then
-                            local oldMoney = player.leaderstats and player.leaderstats:FindFirstChild("Money") and player.leaderstats.Money.Value or 0
                             for _, connection in pairs(getconnections(option.MouseButton1Click)) do
                                 connection:Fire()
-                            end
-                            task.wait(0.5)
-                            local newMoney = player.leaderstats and player.leaderstats:FindFirstChild("Money") and player.leaderstats.Money.Value or oldMoney
-                            local earned = newMoney - oldMoney
-                            if earned > 0 then
-                                Rayfield:Notify({Title = _G.CurrentLang == "VN" and "Bán Hàng" or "Shop Sell", Content = "+" .. tostring(earned) .. " $", Duration = 3})
                             end
                             break
                         end
@@ -132,7 +161,7 @@ local function runAutoSellRoute()
     _G.AutoHarvest = true
 end
 
--- CON ĐƯỜNG 2: TỰ ĐỘNG ĐI MUA HẠT (AUTO SEEDS KHI RESET STOCK)
+-- CON ĐƯỜNG 2: AUTO SEEDS
 local function runAutoSeedsRoute()
     local player = game.Players.LocalPlayer
     local seedNPC = workspace:FindFirstChild("Sam") or workspace:FindFirstChild("SeedMerchant") or workspace:FindFirstChild("SeedNPC")
@@ -176,12 +205,12 @@ local function runAutoSeedsRoute()
     end
 end
 
---- ===========================================================================
---- ĐỊNH NGHĨA PHẦN TỬ UI & ĐĂNG KÝ VÀO HỆ THỐNG ĐỔI NGÔN NGỮ
---- ===========================================================================
-Elements.SecHarvest = MainTab:CreateSection("Quản Lý Thu Hoạch Tự Động")
+-- ===========================================================================
+-- KHỞI TẠO CÁC PHẦN TỬ GIAO DIỆN
+-- ===========================================================================
+UIElements.SecHarvest = MainTab:CreateSection("Quản Lý Thu Hoạch Tự Động")
 
-Elements.ToggleHarvest = MainTab:CreateToggle({
+UIElements.ToggleHarvest = MainTab:CreateToggle({
    Name = "Tự Động Thu Hoạch Trái (Auto Harvest)",
    CurrentValue = false,
    Callback = function(Value)
@@ -217,9 +246,9 @@ Elements.ToggleHarvest = MainTab:CreateToggle({
    end,
 })
 
-Elements.SecSteal = StealTab:CreateSection("Tự Động Đi Trộm Đồ")
+UIElements.SecSteal = StealTab:CreateSection("Tự Động Đi Trộm Đồ")
 
-Elements.ToggleSteal = StealTab:CreateToggle({
+UIElements.ToggleSteal = StealTab:CreateToggle({
    Name = "Kích Hoạt Auto Trộm Trái Cây Đêm",
    CurrentValue = false,
    Callback = function(Value)
@@ -239,5 +268,135 @@ Elements.ToggleSteal = StealTab:CreateToggle({
                               end
                           end
                       end
-                                end
-                                
+                  end
+              end)
+          end
+      end)
+   end,
+})
+
+UIElements.SecSell = ShopSellTab:CreateSection("⚡ Tuyến Đường Tự Động Đi Bán Trái")
+
+UIElements.ToggleSell = ShopSellTab:CreateToggle({
+   Name = "Bật Auto Sell Đi Bộ Khi Đầy Kho",
+   CurrentValue = false,
+   Callback = function(Value) _G.AutoSell = Value end,
+})
+
+UIElements.SecSeeds1 = ShopSeedsTab:CreateSection("📋 Cài Đặt 3 Hạt Giống Ưu Tiên")
+
+ShopSeedsTab:CreateDropdown({
+   Name = "Priority 1",
+   Options = SeedList,
+   CurrentOption = {"Carrot"},
+   MultipleOptions = false,
+   Callback = function(Option) _G.Priority1 = Option[1] end,
+})
+
+ShopSeedsTab:CreateDropdown({
+   Name = "Priority 2",
+   Options = SeedList,
+   CurrentOption = {"Strawberry"},
+   MultipleOptions = false,
+   Callback = function(Option) _G.Priority2 = Option[1] end,
+})
+
+ShopSeedsTab:CreateDropdown({
+   Name = "Priority 3",
+   Options = SeedList,
+   CurrentOption = {"Blueberry"},
+   MultipleOptions = false,
+   Callback = function(Option) _G.Priority3 = Option[1] end,
+})
+
+UIElements.SecSeeds2 = ShopSeedsTab:CreateSection("⚡ Tuyến Đường Auto Seeds Khi Có Tải Lại Kho")
+
+UIElements.ToggleSeeds = ShopSeedsTab:CreateToggle({
+   Name = "Bật Auto Mua Hạt Khi Reset Stock",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.AutoSeeds = Value
+      if Value then
+          task.spawn(function()
+              local lastRestockState = ""
+              while _G.AutoSeeds do
+                  task.wait(1)
+                  pcall(function()
+                      local player = game.Players.LocalPlayer
+                      local restockLabel = nil
+                      for _, v in pairs(player.PlayerGui:GetDescendants()) do
+                          if v:IsA("TextLabel") and (v.Text:match("Restock in") or v.Text:match("Reset in")) then
+                              restockLabel = v
+                              break
+                          end
+                      end
+                      if restockLabel then
+                          if restockLabel.Text ~= lastRestockState and (restockLabel.Text:match("5m") or restockLabel.Text:match("4m 59s")) then
+                              lastRestockState = restockLabel.Text
+                              runAutoSeedsRoute()
+                          end
+                      else
+                          runAutoSeedsRoute()
+                          task.wait(20)
+                      end
+                  end)
+              end
+          end)
+      end
+   end,
+})
+
+UIElements.SecLang = SystemTab:CreateSection("Cấu Hình Ngôn Ngữ Hệ Thống")
+
+local LangDropdown = SystemTab:CreateDropdown({
+   Name = "Chọn Ngôn Ngữ / Select Language",
+   Options = {"Tiếng Việt (VN)", "English (EN)"},
+   CurrentOption = {"Tiếng Việt (VN)"},
+   MultipleOptions = false,
+   Callback = function(Option)
+      if Option[1] == "Tiếng Việt (VN)" then
+          _G.CurrentLang = "VN"
+      else
+          _G.CurrentLang = "EN"
+      end
+      ApplyLanguageUpdate()
+   end,
+})
+
+UIElements.ResetBtn = SystemTab:CreateButton({
+   Name = "Nút Reset Ngôn Ngữ Về Mặc Định",
+   Callback = function()
+       _G.CurrentLang = "VN"
+       LangDropdown:Set({"Tiếng Việt (VN)"})
+       ApplyLanguageUpdate()
+   end,
+})
+
+SystemTab:CreateSection("Tối Ưu Treo Máy AFK & Giảm Tải Phần Cứng")
+
+SystemTab:CreateDropdown({
+   Name = "Chế Độ Giảm Lag (Lag Reduction Mode)",
+   Options = {"Tắt (Disable)", "Cấp 1 (Normal Low)", "Cấp 2 (Super Extreme)"},
+   CurrentOption = {"Tắt (Disable)"},
+   MultipleOptions = false,
+   Callback = function(Option)
+       if Option[1] == "Tắt (Disable)" then _G.LagReductionLevel = 0
+       elseif Option[1] == "Cấp 1 (Normal Low)" then _G.LagReductionLevel = 1
+       elseif Option[1] == "Cấp 2 (Super Extreme)" then _G.LagReductionLevel = 2 end
+       ApplyLagReduction()
+   end,
+})
+
+SystemTab:CreateToggle({
+   Name = "Bật Chống Treo Máy (Anti-AFK)",
+   CurrentValue = true,
+   Callback = function(Value) _G.AntiAFK = Value end,
+})
+
+local virtualUser = game:GetService("VirtualUser")
+game.Players.LocalPlayer.Idled:Connect(function()
+   if _G.AntiAFK then
+       virtualUser:CaptureController()
+       virtualUser:ClickButton2(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+   end
+end)
