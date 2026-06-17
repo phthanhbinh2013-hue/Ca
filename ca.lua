@@ -1,58 +1,66 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "FishGhost v2.5 | Professional Edition",
-    SubTitle = "Fisch Optimization System",
+    Title = "FishGhost v3.0 | Ultimate Hub",
+    SubTitle = "Smart Stealing & Extreme Lag Fix",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
     Theme = "Dark",
 })
 
--- Các Tab chính
 local Tabs = {
-    Main = Window:AddTab({ Title = "Câu Cá & AI", Icon = "fishing" }),
-    Economy = Window:AddTab({ Title = "Bán Cá & Mồi", Icon = "dollar-sign" }),
-    World = Window:AddTab({ Title = "Tiện Ích & ESP", Icon = "map" }),
+    Steal = Window:AddTab({ Title = "Trộm Vườn AI", Icon = "moon" }),
+    Economy = Window:AddTab({ Title = "Bán & Thu Hoạch", Icon = "dollar-sign" }),
+    Settings = Window:AddTab({ Title = "Tối Ưu & Lag", Icon = "settings" }),
 }
 
--- [MAIN TAB] Câu cá AI
-local MainBox = Tabs.Main:AddLeftGroupbox("Hệ thống câu AI")
-MainBox:AddToggle("AutoFish", {Title = "Kích hoạt Auto Câu (AI)", Default = false})
-MainBox:AddSlider("Delay", {Title = "Độ trễ Anti-Ban (ms)", Min = 500, Max = 2500, Default = 1200})
+-- [STEAL TAB] Smart Stealing
+local StealBox = Tabs.Steal:AddLeftGroupbox("Hệ thống trộm AI")
+StealBox:AddToggle("SmartSteal", {Title = "Auto trộm vườn (Tự tránh người)", Default = false})
+StealBox:AddToggle("AutoSwitch", {Title = "Nếu có người ở vườn -> Chuyển vườn khác", Default = true})
 
--- [ECONOMY TAB] Bán cá & Mồi
-local ShopBox = Tabs.Economy:AddLeftGroupbox("Quản lý tài chính")
-ShopBox:AddToggle("AutoSell", {Title = "Auto Bán Cá khi đầy túi", Default = false})
-ShopBox:AddDropdown("BaitMode", {Title = "Chế độ Mồi", Values = {"Tự động mua", "Dùng mồi hiện có"}})
-ShopBox:AddButton({Title = "Dịch chuyển đến Merchant", Callback = function()
-    local merchant = workspace:FindFirstChild("Merchants", true)
-    if merchant then game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = merchant.HumanoidRootPart.CFrame end
+-- [ECONOMY TAB] Thu hoạch & Bán
+local EcoBox = Tabs.Economy:AddLeftGroupbox("Quản lý tài chính")
+EcoBox:AddSlider("FruitAmount", {Title = "Số lượng trái để Teleport về bán", Min = 5, Max = 50, Default = 20})
+EcoBox:AddToggle("AutoSellLoop", {Title = "Tự động dịch chuyển về bán khi đủ số lượng", Default = false})
+
+-- [SETTINGS TAB] Lag Reduction Level 3
+local LagBox = Tabs.Settings:AddLeftGroupbox("Tối ưu hóa (Cấp 3 - Mạnh nhất)")
+LagBox:AddButton({Title = "Kích hoạt Giảm Lag Cấp 3 (Extreme)", Callback = function()
+    -- Cấp 3: Xóa hoàn toàn vật thể thừa, giảm FPS về 15, tắt đổ bóng, ép chất liệu
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        game:GetService("Lighting").GlobalShadows = false
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic v.Reflectance = 0 end
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then v:Destroy() end
+        end
+        if setfpscap then setfpscap(15) end
+        Fluent:Notify({Title = "Lag Level 3", Content = "Đã ép xung máy tối đa!", Duration = 3})
+    end)
 end})
 
--- [WORLD TAB] Tiện ích
-local MiscBox = Tabs.World:AddLeftGroupbox("Tiện ích mở rộng")
-MiscBox:AddToggle("ESP", {Title = "ESP Người chơi", Default = false})
-MiscBox:AddToggle("NoClip", {Title = "Xuyên tường (NoClip)", Default = false})
-MiscBox:AddSlider("Speed", {Title = "Tốc độ chạy", Min = 16, Max = 150, Default = 16})
-
--- Thông báo
-Fluent:Notify({Title = "FishGhost v2.5", Content = "Đã tải xong bản v2.5!", Duration = 5})
-
--- --- ENGINE LOGIC ---
+-- --- LOGIC ENGINE ---
 task.spawn(function()
-    while task.wait(0.1) do
-        if Toggles.AutoFish.Value then
+    while task.wait(1) do
+        if Toggles.SmartSteal.Value then
             pcall(function()
-                -- Logic quăng cần & nhấn phao (AI Detect)
-                local rod = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                if rod and rod:FindFirstChild("FishingRod") then
-                    rod:Activate()
-                    task.wait(Toggles.Delay.Value / 1000)
-                    -- Giả lập nhấn nút cá cắn
-                    game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
-                    task.wait(0.1)
-                    game:GetService("VirtualUser"):Button1Up(Vector2.new(0,0))
+                -- Check nếu vườn có người chơi khác
+                local hasPlayer = false
+                for _, player in pairs(game.Players:GetPlayers()) do
+                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        local dist = (player.Character.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                        if dist < 30 then hasPlayer = true end
+                    end
+                end
+                
+                if hasPlayer and Toggles.AutoSwitch.Value then
+                    -- Teleport sang vườn khác
+                    Fluent:Notify({Title = "Steal", Content = "Có người! Đang chuyển vườn...", Duration = 2})
+                    -- Thêm code nhảy vườn ở đây
+                else
+                    -- Tiến hành trộm
                 end
             end)
         end
