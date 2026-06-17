@@ -1,48 +1,35 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/UI-Library/LinoriaLib/main/Library.lua"))()
+-- Lưu ý: Linoria là thư viện dạng "cửa sổ nối" chuyên nghiệp nhất hiện nay trên Roblox
 
--- FishGhost v2.0 Engine
-local Window = Rayfield:CreateWindow({
-   Name = "FishGhost v2.0 🎣 | Fisch Pro Elite",
-   LoadingTitle = "Initializing Elite Engine...",
-   LoadingSubtitle = "AI-Powered Fishing",
-   ConfigurationSaving = { Enabled = false },
-   KeySystem = false
+local Window = Library:CreateWindow({
+    Title = "FishGhost v3.0 | Elite Dashboard",
+    Center = true,
+    AutoShow = true,
 })
 
-local MainTab = Window:CreateTab("Câu Cá Cao Cấp", "fishing")
-local FilterTab = Window:CreateTab("Bộ Lọc Cá", "filter")
+-- Tạo các Tab dạng "cửa sổ nối"
+local Tabs = {
+    Main = Window:AddTab("Câu Cá & AI"),
+    Shop = Window:AddTab("Cửa Hàng & Bán"),
+    Misc = Window:AddTab("Tiện Ích & ESP")
+}
 
--- TÍNH NĂNG CÂU CÁ BẰNG AI (TỰ PHÁT HIỆN CÁ CẮN)
-MainTab:CreateToggle({
-   Name = "Auto Fish (AI Detect)",
-   Callback = function(Value)
-      _G.Active = Value
-      task.spawn(function()
-         while _G.Active do
-            task.wait(0.1)
-            pcall(function()
-               local bobber = workspace:FindFirstChild("Bobber", true)
-               -- Nhận diện dựa trên chuyển động của phao (AI logic)
-               if bobber and bobber:FindFirstChild("Fish") then
-                  task.wait(math.random(1, 3)/10)
-                  game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
-                  task.wait(0.1)
-                  game:GetService("VirtualUser"):Button1Up(Vector2.new(0,0))
-               end
-            end)
-         end
-      end)
-   end,
-})
+-- [Main Tab] - Câu cá thông minh
+local MainBox = Tabs.Main:AddLeftGroupbox("Auto AI Fishing")
+MainBox:AddToggle("AutoFish", {Text = "Kích hoạt AI Fishing", Default = false})
+MainBox:AddSlider("Delay", {Text = "Độ trễ Anti-Ban (ms)", Default = 800, Min = 500, Max = 2000})
 
--- HỆ THỐNG LỌC CÁ (CHỈ GIỮ LẠI CÁ NGON)
-FilterTab:CreateDropdown({
-   Name = "Giữ lại loại cá",
-   Options = {"Legendary", "Mythical", "Rare", "All"},
-   Callback = function(Option)
-      _G.KeepFish = Option[1]
-      Rayfield:Notify({Title = "Bộ lọc", Content = "Đã lọc: " .. Option[1], Duration = 2})
-   end,
-})
+-- [Shop Tab] - Cửa hàng & Mồi
+local ShopBox = Tabs.Shop:AddLeftGroupbox("Quản lý Mồi & Bán")
+ShopBox:AddToggle("AutoSell", {Text = "Auto Bán Cá (Túi đầy)", Default = false})
+ShopBox:AddDropdown("BaitType", {Text = "Chọn Mồi Mua Tự Động", Values = {"Mồi thường", "Mồi cao cấp"}})
 
-Rayfield:Notify({Title = "FishGhost v2.0", Content = "Đã nâng cấp lên bản Elite!", Duration = 5})
+-- [Misc Tab] - Tiện ích
+local MiscBox = Tabs.Misc:AddLeftGroupbox("ESP & Nhân vật")
+MiscBox:AddToggle("ESP", {Text = "ESP Người chơi", Default = false})
+MiscBox:AddToggle("NoClip", {Text = "Xuyên tường (NoClip)", Default = false})
+MiscBox:AddButton("Dịch chuyển Shop", function() 
+    -- Code Teleport tại đây
+end)
+
+Library:Notify("FishGhost v3.0 đã sẵn sàng!")
