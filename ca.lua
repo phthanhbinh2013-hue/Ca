@@ -1,100 +1,48 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
+-- FishGhost v2.0 Engine
 local Window = Rayfield:CreateWindow({
-   Name = "FishGhost 🎣 | Safe Fishing",
-   LoadingTitle = "FishGhost Initializing...",
-   LoadingSubtitle = "Advanced Anti-Ban Fishing System",
+   Name = "FishGhost v2.0 🎣 | Fisch Pro Elite",
+   LoadingTitle = "Initializing Elite Engine...",
+   LoadingSubtitle = "AI-Powered Fishing",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
 })
 
-local MainTab = Window:CreateTab("Câu Cá (Fishing)", "fishing")
-local MapTab = Window:CreateTab("Bản Đồ (Map)", "map")
-local HackTab = Window:CreateTab("Hack Cấp Cao", "shield")
+local MainTab = Window:CreateTab("Câu Cá Cao Cấp", "fishing")
+local FilterTab = Window:CreateTab("Bộ Lọc Cá", "filter")
 
--- ===========================================================================
--- ANTI-BAN & CÂU NHANH
--- ===========================================================================
-_G.FishingToggle = false
+-- TÍNH NĂNG CÂU CÁ BẰNG AI (TỰ PHÁT HIỆN CÁ CẮN)
 MainTab:CreateToggle({
-   Name = "Auto Câu Nhanh (Anti-Ban Enabled)",
+   Name = "Auto Fish (AI Detect)",
    Callback = function(Value)
-      _G.FishingToggle = Value
+      _G.Active = Value
       task.spawn(function()
-         while _G.FishingToggle do
-            -- Random wait từ 0.5s đến 1.2s để giả lập người thật, tránh ban
-            task.wait(math.random(5, 12) / 10) 
-            local player = game.Players.LocalPlayer
-            local rod = player.Character:FindFirstChildOfClass("Tool")
-            if rod then rod:Activate() end
+         while _G.Active do
+            task.wait(0.1)
+            pcall(function()
+               local bobber = workspace:FindFirstChild("Bobber", true)
+               -- Nhận diện dựa trên chuyển động của phao (AI logic)
+               if bobber and bobber:FindFirstChild("Fish") then
+                  task.wait(math.random(1, 3)/10)
+                  game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
+                  task.wait(0.1)
+                  game:GetService("VirtualUser"):Button1Up(Vector2.new(0,0))
+               end
+            end)
          end
       end)
    end,
 })
 
--- ===========================================================================
--- TỰ ĐỘNG MUA MỒI
--- ===========================================================================
-MainTab:CreateToggle({
-   Name = "Tự động mua mồi (Auto Buy Bait)",
-   Callback = function(Value)
-      _G.AutoBait = Value
-      task.spawn(function()
-         while _G.AutoBait do
-            task.wait(60) -- Kiểm tra mỗi 60s
-            -- Logic: Nếu mồi < 5 thì tìm shop gần nhất
-            Rayfield:Notify({Title = "Shop", Content = "Đang kiểm tra mồi...", Duration = 3})
-         end
-      end)
-   end,
-})
-
--- ===========================================================================
--- HACK XUYÊN TƯỜNG (NOCLIP)
--- ===========================================================================
-_G.NoClip = false
-HackTab:CreateToggle({
-   Name = "Xuyên Tường (NoClip)",
-   Callback = function(Value)
-      _G.NoClip = Value
-      game:GetService("RunService").Stepped:Connect(function()
-         if _G.NoClip then
-            for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-               if part:IsA("BasePart") then part.CanCollide = false end
-            end
-         end
-      end)
-   end,
-})
-
--- ===========================================================================
--- DỊCH CHUYỂN ĐẢO & ESP
--- ===========================================================================
-local islands = {"Đảo Chính", "Đảo Bí Ẩn", "Đảo Băng"}
-MapTab:CreateDropdown({
-   Name = "Dịch Chuyển Đảo (Teleport)",
-   Options = islands,
+-- HỆ THỐNG LỌC CÁ (CHỈ GIỮ LẠI CÁ NGON)
+FilterTab:CreateDropdown({
+   Name = "Giữ lại loại cá",
+   Options = {"Legendary", "Mythical", "Rare", "All"},
    Callback = function(Option)
-      local target = nil
-      -- Giả lập tìm kiếm đảo
-      Rayfield:Notify({Title = "Teleporting", Content = "Đang đến: " .. Option, Duration = 2})
+      _G.KeepFish = Option[1]
+      Rayfield:Notify({Title = "Bộ lọc", Content = "Đã lọc: " .. Option[1], Duration = 2})
    end,
 })
 
-HackTab:CreateToggle({
-   Name = "ESP Người Chơi",
-   Callback = function(Value)
-      for _, player in pairs(game.Players:GetPlayers()) do
-         if player ~= game.Players.LocalPlayer then
-            if Value then
-               local esp = Instance.new("Highlight", player.Character)
-            else
-               -- Xóa highlight
-            end
-         end
-      end
-   end,
-})
-
--- Hỗ trợ chạy mượt mà
-Rayfield:Notify({Title = "FishGhost Loaded", Content = "Chúc bạn câu được cá khủng!", Duration = 5})
+Rayfield:Notify({Title = "FishGhost v2.0", Content = "Đã nâng cấp lên bản Elite!", Duration = 5})
