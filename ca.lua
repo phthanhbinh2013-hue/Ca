@@ -1,11 +1,6 @@
 local CoreGui = game:GetService("CoreGui") or game.Players.LocalPlayer:WaitForChild("PlayerGui")
 local TweenService = game:GetService("TweenService")
 
--- Initialize GUI
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "VControlCenterKey"
-ScreenGui.Parent = CoreGui
-
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
